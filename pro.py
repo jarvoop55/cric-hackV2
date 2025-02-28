@@ -7,7 +7,6 @@ from pyrogram.errors import FloodWait
 from pyrogram.types import Message
 from Mukund import Mukund
 from flask import Flask
-from collections import defaultdict
 
 # Configure Logging
 logging.basicConfig(
@@ -15,28 +14,35 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-# Initialize Database
-storage = Mukund("Vegeta")
-db = storage.database("players")
+# Initialize Databases
+storage_vegeta = Mukund("Vegeta")
+storage_goku = Mukund("Goku")
 
-# In-memory cache for quick lookups (to handle 1,200 players efficiently)
+db_vegeta = storage_vegeta.database("players")
+db_goku = storage_goku.database("players")
+
+# Track active database
+current_db = db_vegeta  # Default database
+current_db_name = "Vegeta"  # Track the name for response messages
+
+# In-memory cache for quick lookups
 player_cache = {}
 
-# Preload players from the database at startup
 def preload_players():
+    """Load players into cache from the active database."""
     global player_cache
-    logging.info("Preloading player database into cache...")
+    logging.info(f"Preloading players from {current_db_name}...")
     try:
-        all_players = db.all()  # This returns a dictionary, not a list
-        if isinstance(all_players, dict):  # Ensure it's a dictionary
-            player_cache = all_players  # Directly assign to cache
-            logging.info(f"Loaded {len(player_cache)} players into cache.")
+        all_players = current_db.all()
+        if isinstance(all_players, dict):
+            player_cache = all_players
+            logging.info(f"Loaded {len(player_cache)} players from {current_db_name}.")
         else:
             logging.error("Database returned unexpected data format!")
     except Exception as e:
         logging.error(f"Failed to preload database: {e}")
 
-# Create Flask app for health check
+# Flask health check
 web_app = Flask(__name__)
 
 @web_app.route('/health')
@@ -52,37 +58,53 @@ async def run_flask():
     config.bind = ["0.0.0.0:8000"]
     await serve(web_app, config)
 
-# Ensure required environment variables exist
+# Environment variables
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
 SESSION_STRING = os.getenv("SESSION")
 
-assert API_ID is not None, "Missing API_ID in environment variables!"
-assert API_HASH is not None, "Missing API_HASH in environment variables!"
-assert SESSION_STRING is not None, "Missing SESSION in environment variables!"
+assert API_ID, "Missing API_ID!"
+assert API_HASH, "Missing API_HASH!"
+assert SESSION_STRING, "Missing SESSION!"
 
-# Initialize Pyrogram bot
 bot = Client(
     "pro",
     api_id=int(API_ID),
     api_hash=API_HASH,
     session_string=SESSION_STRING,
-    workers=20,  # Increased workers for better concurrency
-    max_concurrent_transmissions=10  # Adjusted for handling multiple messages
+    workers=20,
+    max_concurrent_transmissions=10
 )
 
-# Define Target Group (Replace with actual group ID)
-TARGET_GROUP_ID = -1002395952299  # Replace with your group's ID
-
-# Control flag for collect function
+TARGET_GROUP_ID = -1002395952299
 collect_running = False
+
+@bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
+async def switch_database(_, message: Message):
+    """Switch between Vegeta and Goku databases."""
+    global current_db, current_db_name, player_cache
+
+    new_db_name = message.text.split(maxsplit=1)[1].strip().lower() if len(message.text.split()) > 1 else ""
+    
+    if new_db_name == "goku":
+        current_db = db_goku
+        current_db_name = "Goku"
+    elif new_db_name == "vegeta":
+        current_db = db_vegeta
+        current_db_name = "Vegeta"
+    else:
+        await message.reply("⚠ Invalid database! Use: `/switchdb vegeta` or `/switchdb goku`")
+        return
+
+    preload_players()  # Reload cache with new database
+    await message.reply(f"✅ Switched to **{current_db_name}** database.")
 
 @bot.on_message(filters.command("startcollect") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
 async def start_collect(_, message: Message):
     global collect_running
     if not collect_running:
         collect_running = True
-        await message.reply("✅ Collect function started!")
+        await message.reply(f"✅ Collect function started using `{current_db_name}` database!")
     else:
         await message.reply("⚠ Collect function is already running!")
 
@@ -94,6 +116,7 @@ async def stop_collect(_, message: Message):
 
 @bot.on_message(filters.photo & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622]))
 async def hacke(c: Client, m: Message):
+    """Handles image messages and collects OG players."""
     global collect_running
     if not collect_running:
         return
@@ -106,9 +129,8 @@ async def hacke(c: Client, m: Message):
 
         logging.debug(f"Received caption: {m.caption}")
 
-        # Only process OG Player messages
-        if "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ" not in m.caption:
-            return  # Ignore other captions
+        if "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ" not in m.caption:
+            return  # Ignore non-player messages
 
         file_id = m.photo.file_unique_id
 
@@ -116,19 +138,19 @@ async def hacke(c: Client, m: Message):
         if file_id in player_cache:
             player_name = player_cache[file_id]['name']
         else:
-            file_data = db.get(file_id)  # Query database only if not in cache
+            file_data = current_db.get(file_id)  # Query database only if not in cache
             if file_data:
                 player_name = file_data['name']
                 player_cache[file_id] = file_data  # Cache result
             else:
-                logging.warning(f"Image ID {file_id} not found in DB!")
+                logging.warning(f"Image ID {file_id} not found in {current_db_name}!")
                 return
 
-        logging.info(f"Collecting player: {player_name}")
+        logging.info(f"Collecting player: {player_name} from {current_db_name}")
         await bot.send_message(m.chat.id, f"/collect {player_name}")
 
     except FloodWait as e:
-        wait_time = e.value + random.randint(1, 5)  # Add randomness to avoid exact intervals
+        wait_time = e.value + random.randint(1, 5)
         logging.warning(f"Rate limit hit! Waiting for {wait_time} seconds...")
         await asyncio.sleep(wait_time)
     except Exception as e:
@@ -136,7 +158,7 @@ async def hacke(c: Client, m: Message):
 
 @bot.on_message(filters.command("fileid") & filters.chat(TARGET_GROUP_ID) & filters.reply & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
 async def extract_file_id(_, message: Message):
-    """Extracts and sends the unique file ID of a replied photo (Restricted to specific users)"""
+    """Extracts and sends the unique file ID of a replied photo."""
     if not message.reply_to_message or not message.reply_to_message.photo:
         await message.reply("⚠ Please reply to a photo to extract the file ID.")
         return
