@@ -31,16 +31,16 @@ player_cache = {}
 def preload_players():
     """Load players into cache from the active database."""
     global player_cache
-    logging.info(f"Preloading players from {current_db_name}...")
+    logging.info(f"🔄 Preloading players from {current_db_name}...")
     try:
         all_players = current_db.all()
         if isinstance(all_players, dict):
             player_cache = all_players
-            logging.info(f"Loaded {len(player_cache)} players from {current_db_name}.")
+            logging.info(f"✅ Loaded {len(player_cache)} players from {current_db_name}.")
         else:
-            logging.error("Database returned unexpected data format!")
+            logging.error("⚠ Database returned unexpected data format!")
     except Exception as e:
-        logging.error(f"Failed to preload database: {e}")
+        logging.error(f"❌ Failed to preload database: {e}")
 
 # Flask health check
 web_app = Flask(__name__)
@@ -50,7 +50,7 @@ def health_check():
     return "OK", 200
 
 async def run_flask():
-    """ Runs Flask server for health checks """
+    """Runs Flask server for health checks."""
     from hypercorn.asyncio import serve
     from hypercorn.config import Config
 
@@ -79,40 +79,29 @@ bot = Client(
 TARGET_GROUP_ID = -1002395952299
 collect_running = False
 
-@bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
-async def switch_database(_, message: Message):
-    """Switch between Vegeta and Goku databases."""
-    global current_db, current_db_name, player_cache
-
-    new_db_name = message.text.split(maxsplit=1)[1].strip().lower() if len(message.text.split()) > 1 else ""
-    
-    if new_db_name == "goku":
-        current_db = db_goku
-        current_db_name = "Goku"
-    elif new_db_name == "vegeta":
-        current_db = db_vegeta
-        current_db_name = "Vegeta"
-    else:
-        await message.reply("⚠ Invalid database! Use: `/switchdb vegeta` or `/switchdb goku`")
-        return
-
-    preload_players()  # Reload cache with new database
-    await message.reply(f"✅ Switched to **{current_db_name}** database.")
-
 @bot.on_message(filters.command("startcollect") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
 async def start_collect(_, message: Message):
     global collect_running
     if not collect_running:
         collect_running = True
-        await message.reply(f"✅ Collect function started using `{current_db_name}` database!")
+        await message.reply(f"✅ Collection started using `{current_db_name}` database!")
     else:
-        await message.reply("⚠ Collect function is already running!")
+        await message.reply("⚠ Collection is already running!")
 
 @bot.on_message(filters.command("stopcollect") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
 async def stop_collect(_, message: Message):
     global collect_running
     collect_running = False
-    await message.reply("🛑 Collect function stopped!")
+    await message.reply("🛑 Collection stopped!")
+
+async def human_like_typing(message: str, chat_id):
+    """Simulates human-like typing by sending characters with random delay."""
+    typed_text = ""
+    for char in message:
+        typed_text += char
+        await asyncio.sleep(random.uniform(0.05, 0.2))  # Typing delay per character
+
+    await bot.send_message(chat_id, typed_text)
 
 @bot.on_message(filters.photo & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622]))
 async def hacke(c: Client, m: Message):
@@ -122,12 +111,13 @@ async def hacke(c: Client, m: Message):
         return
 
     try:
-        await asyncio.sleep(random.uniform(0.2, 0.6))  # More randomized delay
+        # Simulate thinking time before reacting
+        await asyncio.sleep(random.uniform(1.0, 2.0))
 
         if not m.caption:
             return  # Ignore messages without captions
 
-        logging.debug(f"Received caption: {m.caption}")
+        logging.debug(f"📩 Received caption: {m.caption}")
 
         if "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ" not in m.caption:
             return  # Ignore non-player messages
@@ -143,18 +133,26 @@ async def hacke(c: Client, m: Message):
                 player_name = file_data['name']
                 player_cache[file_id] = file_data  # Cache result
             else:
-                logging.warning(f"Image ID {file_id} not found in {current_db_name}!")
+                logging.warning(f"⚠ Image ID {file_id} not found in {current_db_name}!")
                 return
 
-        logging.info(f"Collecting player: {player_name} from {current_db_name}")
-        await bot.send_message(m.chat.id, f"/collect {player_name}")
+        logging.info(f"🛠 Collecting player: {player_name} from {current_db_name}")
+
+        # Simulating typing instead of instant message sending
+        await human_like_typing(f"/collect {player_name}", m.chat.id)
+
+        # Random cooldowns to avoid looking like a bot
+        if random.random() < 0.1:  # 10% chance to take a longer break
+            cooldown_time = random.uniform(5, 8)
+            logging.info(f"🛑 Taking a cooldown break for {cooldown_time:.1f} seconds...")
+            await asyncio.sleep(cooldown_time)
 
     except FloodWait as e:
         wait_time = e.value + random.randint(1, 5)
-        logging.warning(f"Rate limit hit! Waiting for {wait_time} seconds...")
+        logging.warning(f"🚨 Rate limit hit! Waiting for {wait_time} seconds...")
         await asyncio.sleep(wait_time)
     except Exception as e:
-        logging.error(f"Error processing message: {e}")
+        logging.error(f"❌ Error processing message: {e}")
 
 @bot.on_message(filters.command("fileid") & filters.chat(TARGET_GROUP_ID) & filters.reply & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
 async def extract_file_id(_, message: Message):
@@ -164,13 +162,13 @@ async def extract_file_id(_, message: Message):
         return
     
     file_unique_id = message.reply_to_message.photo.file_unique_id
-    await message.reply(f"📂 **File Unique ID:** `{file_unique_id}`")
+    await human_like_typing(f"📂 **File Unique ID:** `{file_unique_id}`", message.chat.id)
 
 async def main():
-    """ Runs Pyrogram bot and Flask server concurrently """
+    """Runs Pyrogram bot and Flask server concurrently."""
     preload_players()  # Load players into memory before starting
     await bot.start()
-    logging.info("Bot started successfully!")
+    logging.info("🤖 Bot started successfully!")
     await asyncio.gather(run_flask(), idle())
     await bot.stop()
 
