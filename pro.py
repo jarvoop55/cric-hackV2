@@ -99,7 +99,7 @@ async def human_like_typing(message: str, chat_id):
     typed_text = ""
     for char in message:
         typed_text += char
-        await asyncio.sleep(random.uniform(0.05, 0.2))  # Typing delay per character
+        await asyncio.sleep(random.uniform(0.05, 0.1))  # Typing delay per character
 
     await bot.send_message(chat_id, typed_text)
 
@@ -112,7 +112,7 @@ async def hacke(c: Client, m: Message):
 
     try:
         # Simulate thinking time before reacting
-        await asyncio.sleep(random.uniform(1.0, 2.0))
+        await asyncio.sleep(random.uniform(0.3, 0.5))
 
         if not m.caption:
             return  # Ignore messages without captions
