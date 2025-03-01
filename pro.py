@@ -114,6 +114,19 @@ async def stop_collect(_, message: Message):
     collect_running = False
     await message.reply("🛑 Collect function stopped!")
 
+# Add your target channel ID here
+FORWARD_CHANNEL_ID = -1002370254875 # Replace with your actual channel ID
+
+def should_forward_message(reply_text: str) -> bool:
+    """Checks if the reply text contains a special collection message."""
+    trigger_phrases = [
+        "🎯 Look You Collected A Cosmic Player !!",
+        "🎯 Look You Collected A Limited Edition Player !!",
+        "🎯 Look You Collected A Exclusive Player !!",
+        "🎯 Look You Collected A Ultimate Player !!"
+    ]
+    return any(phrase in reply_text for phrase in trigger_phrases)
+
 @bot.on_message(filters.photo & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622]))
 async def hacke(c: Client, m: Message):
     """Handles image messages and collects OG players."""
@@ -147,7 +160,16 @@ async def hacke(c: Client, m: Message):
                 return
 
         logging.info(f"Collecting player: {player_name} from {current_db_name}")
-        await bot.send_message(m.chat.id, f"/collect {player_name}")
+        sent_message = await bot.send_message(m.chat.id, f"/collect {player_name}")
+
+        # Wait for bot's reply
+        await asyncio.sleep(1)
+
+        async for reply in bot.iter_history(m.chat.id, limit=5):
+            if reply.reply_to_message and reply.reply_to_message.message_id == sent_message.message_id:
+                if should_forward_message(reply.text):
+                    await reply.forward(FORWARD_CHANNEL_ID)
+                    logging.info(f"Forwarded message: {reply.text}")
 
     except FloodWait as e:
         wait_time = e.value + random.randint(1, 5)
