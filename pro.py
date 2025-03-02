@@ -77,6 +77,8 @@ bot = Client(
 )
 
 TARGET_GROUP_ID = -1002395952299
+FORWARD_CHANNEL_ID = -1002370254875
+RARITIES_TO_FORWARD = ["Cosmic", "Limited Edition", "Exclusive", "Ultimate"]
 collect_running = False
 
 @bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
@@ -113,19 +115,6 @@ async def stop_collect(_, message: Message):
     global collect_running
     collect_running = False
     await message.reply("🛑 Collect function stopped!")
-
-# Add your target channel ID here
-FORWARD_CHANNEL_ID = -1002370254875 # Replace with your actual channel ID
-
-def should_forward_message(reply_text: str) -> bool:
-    """Checks if the reply text contains a special collection message."""
-    trigger_phrases = [
-        "🎯 Look You Collected A Cosmic Player !!",
-        "🎯 Look You Collected A Limited Edition Player !!",
-        "🎯 Look You Collected A Exclusive Player !!",
-        "🎯 Look You Collected A Ultimate Player !!"
-    ]
-    return any(phrase in reply_text for phrase in trigger_phrases)
 
 @bot.on_message(filters.photo & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622]))
 async def hacke(c: Client, m: Message):
@@ -177,6 +166,20 @@ async def hacke(c: Client, m: Message):
         await asyncio.sleep(wait_time)
     except Exception as e:
         logging.error(f"Error processing message: {e}")
+
+@bot.on_message(filters.chat(TARGET_GROUP_ID))
+async def check_rarity_and_forward(_, message: Message):
+    if not message.text:
+        return  
+
+    if "🎯 Look You Collected A" in message.text:
+        logging.info(f"Checking message for rarity:\n{message.text}")
+
+        for rarity in RARITIES_TO_FORWARD:
+            if f"Rarity : {rarity}" in message.text:
+                logging.info(f"Detected {rarity} celebrity! Forwarding...")
+                await bot.send_message(FORWARD_CHANNEL_ID, message.text)
+                break  
 
 @bot.on_message(filters.command("fileid") & filters.chat(TARGET_GROUP_ID) & filters.reply & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
 async def extract_file_id(_, message: Message):
