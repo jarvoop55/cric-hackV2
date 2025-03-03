@@ -154,7 +154,7 @@ async def stop_main_collect(_, message: Message):
 consecutive_collects = 0  
 skip_remaining = 0  
 
-@bot.on_message(filters.photo & filters.chat([TARGET_GROUP_ID, MAIN_GROUP_ID]) filters.user(COLLECTOR_USER_IDS))
+@bot.on_message(filters.photo & filters.chat([TARGET_GROUP_ID, MAIN_GROUP_ID]) & filters.user(COLLECTOR_USER_IDS))
 async def hacke(c: Client, m: Message):
     """Handles image messages and collects OG players realistically with skipping after 3-4 collections."""
     global collect_running, collect_main_running, consecutive_collects, skip_remaining
