@@ -194,14 +194,16 @@ async def hacke(c: Client, m: Message):
             player_name = player_cache[file_id]['name']
         else:
             file_data = current_db.get(file_id)
-            if file_data:
+
+            if isinstance(file_data, dict) and 'name' in file_data:
                 player_name = file_data['name']
                 player_cache[file_id] = file_data
+            elif isinstance(file_data, str):  
+                # If it's a string, assume it's directly the name
+                player_name = file_data  
             else:
-                logging.warning(f"Image ID {file_id} not found in {current_db_name}!")
+                logging.warning(f"Unexpected data format for Image ID {file_id} in {current_db_name}: {file_data}")
                 return
-
-        logging.info(f"Collecting player: {player_name} from {current_db_name}")
 
         # Simulate typing before sending command
         await bot.send_chat_action(m.chat.id, "typing")
@@ -231,7 +233,6 @@ async def hacke(c: Client, m: Message):
         await asyncio.sleep(wait_time)
     except Exception as e:
         logging.error(f"Error processing message: {e}")
-
 
 @bot.on_message(filters.chat(TARGET_GROUP_ID))
 async def check_rarity_and_forward(_, message: Message):
