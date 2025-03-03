@@ -84,12 +84,11 @@ FORWARD_CHANNEL_ID = -1002254491223  # Forwarding channel (disabled)
 collect_running = False  # For /startcollect command in TARGET_GROUP_ID
 collect_main_running = False  # For /startmain command in MAIN_GROUP_ID
 # Admin User IDs (replace with actual admin IDs)
-ADMIN_USER_IDS = [7859049019, 7508462500, 1710597756, 6895497681, 7435756663]
+ADMIN_USER_IDS = [7859049019, 7508462500, 1710597756, 6895497681, 7435756663, 6845208187]
 # User IDs permitted to trigger the collect function
 COLLECTOR_USER_IDS = [
     7522153272, 7946198415, 7742832624, 7859049019,
-    1710597756, 7828242164, 7957490622
-]
+    1710597756, 7828242164, 7957490622, 6845208187]
 
 @bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
 async def switch_database(_, message: Message):
