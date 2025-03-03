@@ -191,13 +191,13 @@ async def hacke(c: Client, m: Message):
 
         # Use cache for quick lookup
         if file_id in player_cache:
-            player_name = player_cache[file_id]  # Cached names are stored directly
+            player_name = player_cache[file_id]  # Ensure it is just the name string
         else:
             file_data = current_db.get(file_id)
 
             if isinstance(file_data, dict) and "name" in file_data:
-                player_name = file_data["name"]
-                player_cache[file_id] = player_name  # Store name directly in cache
+                player_name = file_data["name"]  # Extract the name
+                player_cache[file_id] = player_name  # Store only the name, not the whole dict
             else:
                 logging.warning(f"Unexpected data format for Image ID {file_id} in {current_db_name}: {file_data}")
                 return  # Skip this player if data format is incorrect
