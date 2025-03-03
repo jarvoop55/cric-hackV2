@@ -150,32 +150,41 @@ async def stop_main_collect(_, message: Message):
         await message.reply("⚠ Main collect function is not running!")
 
 
-@bot.on_message(filters.photo & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622]))
+# Track consecutive collections and skips
+consecutive_collects = 0  
+skip_remaining = 0  
+
+@bot.on_message(filters.photo & filters.chat([TARGET_GROUP_ID, MAIN_GROUP_ID]) filters.user(COLLECTOR_USER_IDS))
 async def hacke(c: Client, m: Message):
-    """Handles image messages and collects OG players."""
-    global collect_running, collect_main_running
-    if not collect_running:
+    """Handles image messages and collects OG players realistically with skipping after 3-4 collections."""
+    global collect_running, collect_main_running, consecutive_collects, skip_remaining
+
+    if not collect_running and not collect_main_running:
         return
-    if m.chat.id == TARGET_GROUP_ID:
-        if not collect_running:
-            return
-    elif m.chat.id == MAIN_GROUP_ID:
-        if not collect_main_running:
-            return
-    else:
-        return  # Ignore messages from other groups
+
+    is_main = m.chat.id == MAIN_GROUP_ID and collect_main_running
+    is_target = m.chat.id == TARGET_GROUP_ID and collect_running
+
+    if not is_main and not is_target:
+        return  # Ignore if neither collect is running
 
     try:
-        await asyncio.sleep(random.uniform(1.0, 2.0))
+        # If in skip mode, decrement counter and return
+        if skip_remaining > 0:
+            skip_remaining -= 1
+            logging.info(f"Skipping collection. {skip_remaining} skips remaining.")
+            return
+
+        # Add a human-like delay before collecting (longer if collect_main_running)
+        delay = random.uniform(1.8, 2.5) if collect_main_running else random.uniform(1.0, 2.0)
+        await asyncio.sleep(delay)
 
         if not m.caption:
             return
 
         logging.debug(f"Received caption: {m.caption}")
 
-        # Check for the exact caption
         target_caption = "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ"
-
         if m.caption.strip() != target_caption:
             return
 
@@ -185,19 +194,24 @@ async def hacke(c: Client, m: Message):
         if file_id in player_cache:
             player_name = player_cache[file_id]['name']
         else:
-            file_data = current_db.get(file_id)  # Query database only if not in cache
+            file_data = current_db.get(file_id)
             if file_data:
                 player_name = file_data['name']
-                player_cache[file_id] = file_data  # Cache result
+                player_cache[file_id] = file_data
             else:
                 logging.warning(f"Image ID {file_id} not found in {current_db_name}!")
                 return
 
         logging.info(f"Collecting player: {player_name} from {current_db_name}")
+
+        # Simulate typing before sending command
+        await bot.send_chat_action(m.chat.id, "typing")
+        await asyncio.sleep(random.uniform(1.0, 2.5))  # Fake typing time
+
         sent_message = await bot.send_message(m.chat.id, f"/collect {player_name}")
 
-        # Wait for bot's reply
-        await asyncio.sleep(1)
+        # Wait for bot's reply (longer if collect_main_running)
+        await asyncio.sleep(random.uniform(2.0, 5.0) if collect_main_running else 1)
 
         async for reply in bot.iter_history(m.chat.id, limit=5):
             if reply.reply_to_message and reply.reply_to_message.message_id == sent_message.message_id:
@@ -205,12 +219,20 @@ async def hacke(c: Client, m: Message):
                     await reply.forward(FORWARD_CHANNEL_ID)
                     logging.info(f"Forwarded message: {reply.text}")
 
+        # Track collections and trigger skip mode
+        consecutive_collects += 1
+        if consecutive_collects >= random.randint(5, 6):  # After 3-4 collections
+            skip_remaining = random.randint(1, 2)  # Skip 1-2 players
+            consecutive_collects = 0  # Reset collection counter
+            logging.info(f"Skipping next {skip_remaining} players to look natural.")
+
     except FloodWait as e:
         wait_time = e.value + random.randint(1, 5)
         logging.warning(f"Rate limit hit! Waiting for {wait_time} seconds...")
         await asyncio.sleep(wait_time)
     except Exception as e:
         logging.error(f"Error processing message: {e}")
+
 
 @bot.on_message(filters.chat(TARGET_GROUP_ID))
 async def check_rarity_and_forward(_, message: Message):
