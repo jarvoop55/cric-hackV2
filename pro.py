@@ -191,19 +191,18 @@ async def hacke(c: Client, m: Message):
 
         # Use cache for quick lookup
         if file_id in player_cache:
-            player_name = player_cache[file_id]['name']
+            player_name = player_cache[file_id]  # Cached names are stored directly
         else:
             file_data = current_db.get(file_id)
 
-            if isinstance(file_data, dict) and 'name' in file_data:
-                player_name = file_data['name']
-                player_cache[file_id] = file_data
-            elif isinstance(file_data, str):  
-                # If it's a string, assume it's directly the name
-                player_name = file_data  
+            if isinstance(file_data, dict) and "name" in file_data:
+                player_name = file_data["name"]
+                player_cache[file_id] = player_name  # Store name directly in cache
             else:
                 logging.warning(f"Unexpected data format for Image ID {file_id} in {current_db_name}: {file_data}")
-                return
+                return  # Skip this player if data format is incorrect
+
+        logging.info(f"Collecting player: {player_name} from {current_db_name}")
 
         # Simulate typing before sending command
         await bot.send_chat_action(m.chat.id, "typing")
@@ -222,7 +221,7 @@ async def hacke(c: Client, m: Message):
 
         # Track collections and trigger skip mode
         consecutive_collects += 1
-        if consecutive_collects >= random.randint(3, 6):  # After 3-4 collections
+        if consecutive_collects >= random.randint(3, 6):  # After 3-6 collections
             skip_remaining = random.randint(1, 2)  # Skip 1-2 players
             consecutive_collects = 0  # Reset collection counter
             logging.info(f"Skipping next {skip_remaining} players to look natural.")
