@@ -220,7 +220,7 @@ async def hacke(c: Client, m: Message):
 
         # Track collections and trigger skip mode
         consecutive_collects += 1
-        if consecutive_collects >= random.randint(5, 6):  # After 3-4 collections
+        if consecutive_collects >= random.randint(3, 6):  # After 3-4 collections
             skip_remaining = random.randint(1, 2)  # Skip 1-2 players
             consecutive_collects = 0  # Reset collection counter
             logging.info(f"Skipping next {skip_remaining} players to look natural.")
