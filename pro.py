@@ -76,10 +76,20 @@ bot = Client(
     max_concurrent_transmissions=10
 )
 
-TARGET_GROUP_ID = -1002395952299
-FORWARD_CHANNEL_ID = -1002370254875
 RARITIES_TO_FORWARD = ["Cosmic", "Limited Edition", "Exclusive", "Ultimate"]
-collect_running = False
+TARGET_GROUP_ID = -1002395952299  # Original target group
+MAIN_GROUP_ID = -1002499388382 # Main group for /startmain command
+FORWARD_CHANNEL_ID = -1002254491223  # Forwarding channel (disabled)
+# Control flags for collect functions
+collect_running = False  # For /startcollect command in TARGET_GROUP_ID
+collect_main_running = False  # For /startmain command in MAIN_GROUP_ID
+# Admin User IDs (replace with actual admin IDs)
+ADMIN_USER_IDS = [7859049019, 7508462500, 1710597756, 6895497681, 7435756663]
+# User IDs permitted to trigger the collect function
+COLLECTOR_USER_IDS = [
+    7522153272, 7946198415, 7742832624, 7859049019,
+    1710597756, 7828242164, 7957490622
+]
 
 @bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
 async def switch_database(_, message: Message):
@@ -101,7 +111,7 @@ async def switch_database(_, message: Message):
     preload_players()  # Reload cache with new database
     await message.reply(f"✅ Switched to **{current_db_name}** database.")
 
-@bot.on_message(filters.command("startcollect") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
+@bot.on_message(filters.command("startcollect") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def start_collect(_, message: Message):
     global collect_running
     if not collect_running:
@@ -110,29 +120,64 @@ async def start_collect(_, message: Message):
     else:
         await message.reply("⚠ Collect function is already running!")
 
-@bot.on_message(filters.command("stopcollect") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
+@bot.on_message(filters.command("stopcollect") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def stop_collect(_, message: Message):
     global collect_running
     collect_running = False
     await message.reply("🛑 Collect function stopped!")
 
+@bot.on_message(filters.command("startmain") & filters.user(ADMIN_USER_IDS))
+async def start_main_collect(_, message: Message):
+    """Starts the main collect function but only affects MAIN_GROUP_ID."""
+    global collect_main_running
+    if not collect_main_running:
+        collect_main_running = True
+        await message.reply("✅ Main collect function started!")
+        logging.info("Main collect function started in MAIN_GROUP_ID.")
+    else:
+        await message.reply("⚠ Main collect function is already running!")
+
+
+@bot.on_message(filters.command("stopmain") & filters.user(ADMIN_USER_IDS))
+async def stop_main_collect(_, message: Message):
+    """Stops the main collect function but only affects MAIN_GROUP_ID."""
+    global collect_main_running
+    if collect_main_running:
+        collect_main_running = False
+        await message.reply("🛑 Main collect function stopped!")
+        logging.info("Main collect function stopped in MAIN_GROUP_ID.")
+    else:
+        await message.reply("⚠ Main collect function is not running!")
+
+
 @bot.on_message(filters.photo & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622]))
 async def hacke(c: Client, m: Message):
     """Handles image messages and collects OG players."""
-    global collect_running
+    global collect_running, collect_main_running
     if not collect_running:
         return
+    if m.chat.id == TARGET_GROUP_ID:
+        if not collect_running:
+            return
+    elif m.chat.id == MAIN_GROUP_ID:
+        if not collect_main_running:
+            return
+    else:
+        return  # Ignore messages from other groups
 
     try:
-        await asyncio.sleep(random.uniform(0.2, 0.6))  # More randomized delay
+        await asyncio.sleep(random.uniform(1.0, 2.0))
 
         if not m.caption:
-            return  # Ignore messages without captions
+            return
 
         logging.debug(f"Received caption: {m.caption}")
 
-        if "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ" not in m.caption:
-            return  # Ignore non-player messages
+        # Check for the exact caption
+        target_caption = "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ"
+
+        if m.caption.strip() != target_caption:
+            return
 
         file_id = m.photo.file_unique_id
 
