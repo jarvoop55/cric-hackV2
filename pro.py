@@ -59,13 +59,11 @@ async def run_flask():
     await serve(web_app, config)
 
 # Environment variables
-API_ID = os.getenv("API_ID")
-API_HASH = os.getenv("API_HASH")
-SESSION_STRING = os.getenv("SESSION")
+API_ID = 20061115
+API_HASH = "c30d56d90d59b3efc7954013c580e076"
+SESSION_STRING = "BQEyG7sAiPlaKtmI-9rpx9Y2gFctOWa7B5Opxw73qv-XTHpWVkPyMeSe_foRrkpeGv9St8fdqKFNVss7gzNa3q-R5Q8RRGp64OY2DO9D79ZPPt6X5YbzQSRsnIofb_lmkS0Z6N9Uk-9N93vszna0Q5mENBfamCKWhr6CtvS7eeSVw2Kt0AyhAqBphjwZi84UyqpuezZIOEQt7YjoAPKBfPsuMwIrdpo1rahirjTRJZ6ExK2BJTh-u7oTm5n1uyGCKbEeno9fIYRSCt6Q8NKV3O0FRgqw30W_dVCK_fqo3LsJrxJ0F8vVwIO7aKfVNsrXb-NZs-R_njMrEkckGSbm04B_4qNG2gAAAAGEzYnbAA"
 
-assert API_ID, "Missing API_ID!"
-assert API_HASH, "Missing API_HASH!"
-assert SESSION_STRING, "Missing SESSION!"
+
 
 bot = Client(
     "pro",
@@ -77,14 +75,14 @@ bot = Client(
 )
 
 RARITIES_TO_FORWARD = ["Cosmic", "Limited Edition", "Exclusive", "Ultimate"]
-TARGET_GROUP_ID = -1002395952299  # Original target group
+TARGET_GROUP_ID = -1002258939999  # Original target group
 MAIN_GROUP_ID = -1002499388382 # Main group for /startmain command
-FORWARD_CHANNEL_ID = -1002254491223  # Forwarding channel (disabled)
+FORWARD_CHANNEL_ID = -1002264265999 # Forwarding channel (disabled)
 # Control flags for collect functions
 collect_running = False  # For /startcollect command in TARGET_GROUP_ID
 collect_main_running = False  # For /startmain command in MAIN_GROUP_ID
 # Admin User IDs (replace with actual admin IDs)
-ADMIN_USER_IDS = [7859049019, 7508462500, 1710597756, 6895497681, 7435756663]
+ADMIN_USER_IDS = [7859049019, 7508462500, 1710597756, 6895497681, 7435756663, 6523029979]
 # User IDs permitted to trigger the collect function
 COLLECTOR_USER_IDS = [
     7522153272, 7946198415, 7742832624, 7859049019,
