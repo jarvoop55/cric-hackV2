@@ -224,7 +224,7 @@ async def check_rarity_and_forward(_, message: Message):
                 await bot.send_message(FORWARD_CHANNEL_ID, message.text)
                 break  
 
-@bot.on_message(filters.command("fileid") & filters.chat(TARGET_GROUP_ID) & filters.reply & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
+@bot.on_message(filters.command("fileid") & filters.user(ADMIN_USER_IDS))
 async def extract_file_id(_, message: Message):
     """Extracts and sends the unique file ID of a replied photo."""
     if not message.reply_to_message or not message.reply_to_message.photo:
