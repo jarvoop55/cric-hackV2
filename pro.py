@@ -99,7 +99,7 @@ async def forward_spam():
     while collect_running:
         try:
             forwarded_count = 0
-            async for message in bot.iter_history(FORWARD_SOURCE_GROUP, limit=10):  # Fetch last 10 messages
+            async for message in bot.get_chat_history(FORWARD_SOURCE_GROUP, limit=10):  # FIXED
                 if forwarded_count >= 5:
                     break  # Stop after forwarding 5 messages
 
@@ -237,12 +237,12 @@ async def hacke(c: Client, m: Message):
         # Wait for bot's reply
         await asyncio.sleep(1)
 
-        async for reply in bot.iter_history(m.chat.id, limit=5):
+        async for reply in bot.get_chat_history(m.chat.id, limit=5):  # FIXED
             if reply.reply_to_message and reply.reply_to_message.message_id == sent_message.message_id:
                 if should_forward_message(reply.text):
                     await reply.forward(FORWARD_CHANNEL_ID)
                     logging.info(f"Forwarded message: {reply.text}")
-
+                    
     except FloodWait as e:
         wait_time = e.value + random.randint(1, 5)
         logging.warning(f"Rate limit hit! Waiting for {wait_time} seconds...")
