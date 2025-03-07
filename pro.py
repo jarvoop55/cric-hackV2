@@ -90,6 +90,7 @@ COLLECTOR_USER_IDS = [
 ]
 # Background Task for Forward Spamming
 spam_task = None
+FORWARD_SOURCE_GROUP = -1002305248985  # Group where messages will be taken from
 
 async def forward_spam():
     """Continuously forwards messages while collect is running."""
