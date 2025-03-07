@@ -93,31 +93,33 @@ spam_task = None
 FORWARD_SOURCE_GROUP = -1002305248985  # Group where messages will be taken from
 
 async def forward_spam():
-    """Continuously forwards messages in batches of 5 while collect is running."""
+    """Continuously forwards messages in batches while collect is running."""
     global collect_running
 
     while collect_running:
         try:
-            forwarded_count = 0
+            messages_to_forward = []
+            
             async for message in bot.get_chat_history(FORWARD_SOURCE_GROUP, limit=10):  # Fetch last 10 messages
-                if forwarded_count >= 5:
-                    break  # Stop after forwarding 5 messages
+                if len(messages_to_forward) >= 5:
+                    break  # Stop after collecting 5 messages
 
-                if message.text or message.photo or message.document or message.sticker:  # Include stickers
-                    try:
-                        await message.forward(TARGET_GROUP_ID)  # Forward to target group
-                        forwarded_count += 1
-                        await asyncio.sleep(random.uniform(1.5, 3.0))  # Random delay
-                    except FloodWait as e:
-                        logging.warning(f"FloodWait detected! Sleeping for {e.value} seconds...")
-                        await asyncio.sleep(e.value)
-                        break  # Stop forwarding for now
-                    except Exception as e:
-                        logging.error(f"Error forwarding message: {e}")
+                if message.text or message.photo or message.document or message.sticker:
+                    messages_to_forward.append(message)
+
+            if messages_to_forward:
+                # Forward all collected messages at once (minimal delay between them)
+                tasks = [msg.forward(TARGET_GROUP_ID) for msg in messages_to_forward]
+                await asyncio.gather(*tasks)
 
             await asyncio.sleep(random.uniform(4, 6))  # Wait before next batch
+
+        except FloodWait as e:
+            logging.warning(f"FloodWait detected! Sleeping for {e.value} seconds...")
+            await asyncio.sleep(e.value)
         except Exception as e:
             logging.error(f"Error in forward_spam loop: {e}")
+
 
 @bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
 async def switch_database(_, message: Message):
