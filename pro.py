@@ -88,6 +88,25 @@ COLLECTOR_USER_IDS = [
     7522153272, 7946198415, 7742832624, 7859049019,
     1710597756, 7828242164, 7957490622
 ]
+# Background Task for Forward Spamming
+spam_task = None
+
+async def forward_spam():
+    """Continuously forwards messages while collect is running."""
+    global collect_running
+
+    while collect_running:
+        try:
+            for _ in range(5):  # Send 5 messages at a time
+                await bot.send_message(TARGET_GROUP_ID, "2")
+                await asyncio.sleep(random.uniform(0.5, 1.5))  # Slight delay to avoid detection
+            await asyncio.sleep(5)  # Wait before sending the next batch
+        except FloodWait as e:
+            logging.warning(f"FloodWait detected! Sleeping for {e.value} seconds...")
+            await asyncio.sleep(e.value)
+        except Exception as e:
+            logging.error(f"Error in forward_spam: {e}")
+
 
 @bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
 async def switch_database(_, message: Message):
@@ -111,17 +130,21 @@ async def switch_database(_, message: Message):
 
 @bot.on_message(filters.command("startcollect") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def start_collect(_, message: Message):
-    global collect_running
+    global collect_running, spam_task
     if not collect_running:
         collect_running = True
+        spam_task = asyncio.create_task(forward_spam())  # Start spamming
         await message.reply(f"✅ Collect function started using `{current_db_name}` database!")
     else:
         await message.reply("⚠ Collect function is already running!")
 
 @bot.on_message(filters.command("stopcollect") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def stop_collect(_, message: Message):
-    global collect_running
+    global collect_running, spam_task
     collect_running = False
+    if spam_task:
+        spam_task.cancel()  # Stop the spam task
+        spam_task = None
     await message.reply("🛑 Collect function stopped!")
 
 @bot.on_message(filters.command("startmain") & filters.user(ADMIN_USER_IDS))
