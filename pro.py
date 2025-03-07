@@ -99,11 +99,11 @@ async def forward_spam():
     while collect_running:
         try:
             forwarded_count = 0
-            async for message in bot.get_chat_history(FORWARD_SOURCE_GROUP, limit=10):  # FIXED
+            async for message in bot.get_chat_history(FORWARD_SOURCE_GROUP, limit=10):  # Fetch last 10 messages
                 if forwarded_count >= 5:
                     break  # Stop after forwarding 5 messages
 
-                if message.text or message.photo or message.document:
+                if message.text or message.photo or message.document or message.sticker:  # Include stickers
                     try:
                         await message.forward(TARGET_GROUP_ID)  # Forward to target group
                         forwarded_count += 1
