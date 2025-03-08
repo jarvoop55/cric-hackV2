@@ -91,34 +91,59 @@ COLLECTOR_USER_IDS = [
 # Background Task for Forward Spamming
 spam_task = None
 FORWARD_SOURCE_GROUP = -1002305248985  # Group where messages will be taken from
+MAX_FORWARDS_PER_CYCLE = 250 # Max messages forwarded before cooldown
+COOLDOWN_DURATION = 15  # Cooldown time in minutes
 
 async def forward_spam():
-    """Continuously forwards messages in batches while collect is running."""
+    """Safely forwards messages with a threshold and cooldown system."""
     global collect_running
+
+    forwarded_count = 0  # Track total forwarded messages
 
     while collect_running:
         try:
             messages_to_forward = []
-            
-            async for message in bot.get_chat_history(FORWARD_SOURCE_GROUP, limit=10):  # Fetch last 10 messages
-                if len(messages_to_forward) >= 5:
-                    break  # Stop after collecting 5 messages
+            cycle_forwarded = 0  # Track forwards in the current cycle
+
+            async for message in bot.get_chat_history(FORWARD_SOURCE_GROUP, limit=10):
+                if cycle_forwarded >= 5 or forwarded_count >= MAX_FORWARDS_PER_CYCLE:
+                    break  # Stop after reaching the per-cycle limit or global threshold
 
                 if message.text or message.photo or message.document or message.sticker:
                     messages_to_forward.append(message)
 
             if messages_to_forward:
-                # Forward all collected messages at once (minimal delay between them)
-                tasks = [msg.forward(TARGET_GROUP_ID) for msg in messages_to_forward]
-                await asyncio.gather(*tasks)
+                for msg in messages_to_forward:
+                    if forwarded_count >= MAX_FORWARDS_PER_CYCLE:
+                        logging.info(f"Reached {MAX_FORWARDS_PER_CYCLE} forwards! Pausing for {COOLDOWN_DURATION} minutes...")
+                        await asyncio.sleep(COOLDOWN_DURATION * 60)  # Convert minutes to seconds
+                        forwarded_count = 0  # Reset counter after cooldown
 
-            await asyncio.sleep(random.uniform(4, 6))  # Wait before next batch
+                    try:
+                        await msg.forward(TARGET_GROUP_ID)
+                        forwarded_count += 1
+                        cycle_forwarded += 1
+                        logging.info(f"Forwarded message ID {msg.message_id} (Total: {forwarded_count}/{MAX_FORWARDS_PER_CYCLE})")
 
-        except FloodWait as e:
-            logging.warning(f"FloodWait detected! Sleeping for {e.value} seconds...")
-            await asyncio.sleep(e.value)
+                        # Add a dynamic delay to prevent spam detection
+                        await asyncio.sleep(random.uniform(2, 6))
+
+                        if cycle_forwarded >= 5:
+                            break  # Stop after 5 forwards per cycle
+
+                    except FloodWait as e:
+                        wait_time = e.value + random.randint(2, 5)  # Exponential backoff
+                        logging.warning(f"FloodWait detected! Sleeping for {wait_time} seconds...")
+                        await asyncio.sleep(wait_time)
+                    except Exception as e:
+                        logging.error(f"Error forwarding message ID {msg.message_id}: {e}")
+
+            # Controlled delay before next batch
+            await asyncio.sleep(random.uniform(4, 6))
+
         except Exception as e:
             logging.error(f"Error in forward_spam loop: {e}")
+            await asyncio.sleep(5)  # Small recovery delay
 
 
 @bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
