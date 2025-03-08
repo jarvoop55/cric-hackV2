@@ -132,7 +132,7 @@ async def forward_spam():
                             break  # Stop after 5 forwards per cycle
 
                     except FloodWait as e:
-                        wait_time = e.value + random.randint(2, 5)  # Exponential backoff
+                        wait_time = e.value + random.randint(2, 3)  # Exponential backoff
                         logging.warning(f"FloodWait detected! Sleeping for {wait_time} seconds...")
                         await asyncio.sleep(wait_time)
                     except Exception as e:
