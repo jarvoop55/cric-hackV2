@@ -7,6 +7,8 @@ from pyrogram.errors import FloodWait
 from pyrogram.types import Message
 from Mukund import Mukund
 from flask import Flask
+from collections import defaultdict
+import datetime
 
 # Configure Logging
 logging.basicConfig(
@@ -215,6 +217,16 @@ async def stop_main_collect(_, message: Message):
         await message.reply("⚠ Main collect function is not running!")
 
 
+# Global telemetry tracking
+telemetry_stats = {
+    "total_collected": 0,
+    "total_skipped": 0,
+    "duplicate_skipped": 0,
+    "failed_collections": 0,
+    "hourly_stats": defaultdict(int),
+    "daily_stats": defaultdict(int)
+}
+
 @bot.on_message(filters.photo & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622]))
 async def hacke(c: Client, m: Message):
     """Handles image messages and collects OG players."""
@@ -234,6 +246,7 @@ async def hacke(c: Client, m: Message):
         await asyncio.sleep(random.uniform(1.0, 2.0))
 
         if not m.caption:
+            telemetry_stats["total_skipped"] += 1
             return
 
         logging.debug(f"Received caption: {m.caption}")
@@ -242,6 +255,7 @@ async def hacke(c: Client, m: Message):
         target_caption = "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ"
 
         if m.caption.strip() != target_caption:
+            telemetry_stats["total_skipped"] += 1
             return
 
         file_id = m.photo.file_unique_id
@@ -256,6 +270,7 @@ async def hacke(c: Client, m: Message):
                 player_cache[file_id] = file_data  # Cache result
             else:
                 logging.warning(f"Image ID {file_id} not found in {current_db_name}!")
+                telemetry_stats["total_skipped"] += 1
                 return
 
         logging.info(f"Collecting player: {player_name} from {current_db_name}")
@@ -269,13 +284,21 @@ async def hacke(c: Client, m: Message):
                 if should_forward_message(reply.text):
                     await reply.forward(FORWARD_CHANNEL_ID)
                     logging.info(f"Forwarded message: {reply.text}")
-                    
+
+        # ✅ Update Telemetry Stats
+        telemetry_stats["total_collected"] += 1
+        hour = datetime.datetime.now().strftime("%Y-%m-%d %H:00")
+        day = datetime.datetime.now().strftime("%Y-%m-%d")
+        telemetry_stats["hourly_stats"][hour] += 1
+        telemetry_stats["daily_stats"][day] += 1
+
     except FloodWait as e:
         wait_time = e.value + random.randint(1, 5)
         logging.warning(f"Rate limit hit! Waiting for {wait_time} seconds...")
         await asyncio.sleep(wait_time)
     except Exception as e:
         logging.error(f"Error processing message: {e}")
+        telemetry_stats["failed_collections"] += 1
 
 @bot.on_message(filters.chat(TARGET_GROUP_ID))
 async def check_rarity_and_forward(_, message: Message):
@@ -300,6 +323,26 @@ async def extract_file_id(_, message: Message):
     
     file_unique_id = message.reply_to_message.photo.file_unique_id
     await message.reply(f"📂 **File Unique ID:** `{file_unique_id}`")
+
+
+@bot.on_message(filters.command("stats") & filters.user(ADMIN_USER_ID))
+async def show_stats(c: Client, m: Message):
+    """Shows bot performance telemetry stats"""
+    hour = datetime.datetime.now().strftime("%Y-%m-%d %H:00")
+    day = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    stats_report = (
+        f"📊 **Bot Telemetry Report**\n"
+        f"🔹 **Total Players Collected:** {telemetry_stats['total_collected']}\n"
+        f"🔹 **Total Players Skipped:** {telemetry_stats['total_skipped']}\n"
+        f"🔹 **Duplicate Skipped:** {telemetry_stats['duplicate_skipped']}\n"
+        f"🔹 **Failed Collections:** {telemetry_stats['failed_collections']}\n"
+        f"\n📅 **Today's Stats ({day}):** {telemetry_stats['daily_stats'][day]} collected\n"
+        f"⏳ **Last Hour ({hour}):** {telemetry_stats['hourly_stats'][hour]} collected\n"
+    )
+
+    await m.reply_text(stats_report)
+
 
 async def main():
     """ Runs Pyrogram bot and Flask server concurrently """
