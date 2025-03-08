@@ -325,7 +325,7 @@ async def extract_file_id(_, message: Message):
     await message.reply(f"📂 **File Unique ID:** `{file_unique_id}`")
 
 
-@bot.on_message(filters.command("stats") & filters.user(ADMIN_USER_ID))
+@bot.on_message(filters.command("stats") & filters.user(ADMIN_USER_IDS))
 async def show_stats(c: Client, m: Message):
     """Shows bot performance telemetry stats"""
     hour = datetime.datetime.now().strftime("%Y-%m-%d %H:00")
