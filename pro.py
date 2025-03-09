@@ -77,7 +77,7 @@ bot = Client(
 )
 
 RARITIES_TO_FORWARD = ["Cosmic", "Limited Edition", "Exclusive", "Ultimate"]
-TARGET_GROUP_ID = -1002258939999  # Original target group
+TARGET_GROUP_ID = -1002348881334  # Original target group
 MAIN_GROUP_ID = -1002499388382 # Main group for /startmain command
 FORWARD_CHANNEL_ID = -1002264265999 # Forwarding channel (disabled)
 # Control flags for collect functions
