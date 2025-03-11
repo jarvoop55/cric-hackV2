@@ -115,8 +115,7 @@ async def switch_database(_, message: Message):
 async def start_collect(_, message: Message):
     global collect_running, spam_task
     if not collect_running:
-        collect_running = True
-        spam_task = asyncio.create_task(forward_spam())  # Start spamming
+        collect_running = True    
         reply_msg = await message.reply(f"✅ Collect function started using `{current_db_name}` database!\nForward spam enabled!")
     else:
         reply_msg = await message.reply("⚠ Collect function is already running!")
@@ -128,9 +127,6 @@ async def start_collect(_, message: Message):
 async def stop_collect(_, message: Message):
     global collect_running, spam_task
     collect_running = False
-    if spam_task:
-        spam_task.cancel()  # Stop the spam task
-        spam_task = None
     reply_msg = await message.reply("🛑 Collect function stopped!\nForward spam disabled!")
 
     await asyncio.sleep(2)
@@ -268,7 +264,7 @@ async def extract_file_id(_, message: Message):
     await message.reply(f"📂 **File Unique ID:** `{file_unique_id}`")
 
 
-@bot.on_message(filters.command("stats") & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
 async def show_stats(c: Client, m: Message):
     """Shows bot performance telemetry stats"""
     hour = datetime.datetime.now().strftime("%Y-%m-%d %H:00")
