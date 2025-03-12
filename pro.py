@@ -307,7 +307,7 @@ async def extract_file_id(_, message: Message):
     await message.reply(f"📂 **File Unique ID:** `{file_unique_id}`")
 
 
-@bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
+@bot.on_message(filters.command("stats") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
 async def show_stats(c: Client, m: Message):
     """Shows bot performance telemetry stats"""
     hour = datetime.datetime.now().strftime("%Y-%m-%d %H:00")
