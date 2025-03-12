@@ -79,10 +79,12 @@ bot = Client(
 RARITIES_TO_FORWARD = ["Cosmic", "Limited Edition", "Exclusive", "Ultimate"]
 TARGET_GROUP_ID = -1002348881334  # Original target group
 MAIN_GROUP_ID = -1002499388382 # Main group for /startmain command
-FORWARD_CHANNEL_ID = -1002264265999 # Forwarding channel (disabled)
+FORWARD_CHANNEL_ID = -1002264265999
+SOURCE_CHAT_ID = -1002305248985
 # Control flags for collect functions
 collect_running = False  # For /startcollect command in TARGET_GROUP_ID
-collect_main_running = False  # For /startmain command in MAIN_GROUP_ID
+collect_main_running = False # For /startmain command in MAIN_GROUP_ID
+spam_task = None  # Task handler for forward spam
 # Admin User IDs (replace with actual admin IDs)
 ADMIN_USER_IDS = [7859049019, 7508462500, 1710597756, 6895497681, 7435756663, 6523029979]
 # User IDs permitted to trigger the collect function
@@ -90,6 +92,9 @@ COLLECTOR_USER_IDS = [
     7522153272, 7946198415, 7742832624, 7859049019,
     1710597756, 7828242164, 7957490622
 ]
+# Forward Spam Configuration
+X_MESSAGES = 800  # Total messages before taking a break
+T_BREAK = 1800  # Break time in seconds
 
 @bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
 async def switch_database(_, message: Message):
@@ -111,26 +116,64 @@ async def switch_database(_, message: Message):
     preload_players()  # Reload cache with new database
     await message.reply(f"✅ Switched to **{current_db_name}** database.")
 
+async def forward_spam():
+    """Forwards 4-5 messages at a time with intervals, stops after X messages, and takes a T-second break."""
+    global collect_running
+    total_sent = 0  # Track sent messages
+
+    while collect_running:
+        try:
+            async for message in bot.get_chat_history(SOURCE_CHAT_ID, limit=50):
+                if not collect_running:
+                    return  # Stop if collect function is off
+                
+                # Forward 4-5 messages in one batch
+                batch_size = random.randint(4, 5)
+                for _ in range(batch_size):
+                    await message.forward(TARGET_GROUP_ID)
+                    total_sent += 1
+                    logging.info(f"Forwarded message {total_sent}/{X_MESSAGES}")
+
+                    if total_sent >= X_MESSAGES:
+                        logging.info(f"Reached {X_MESSAGES} messages. Taking a {T_BREAK}-second break...")
+                        await asyncio.sleep(T_BREAK)
+                        total_sent = 0  # Reset counter after break
+
+                    await asyncio.sleep(random.uniform(1, 1.5))  # Small delay between each forward
+
+                await asyncio.sleep(random.uniform(4, 5))  # Wait before sending the next batch
+                
+        except FloodWait as e:
+            logging.warning(f"FloodWait! Sleeping for {e.value} seconds.")
+            await asyncio.sleep(e.value + random.randint(1, 5))
+        except Exception as e:
+            logging.error(f"Error in forward_spam: {e}")
+
 @bot.on_message(filters.command("startcollect") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def start_collect(_, message: Message):
     global collect_running, spam_task
     if not collect_running:
-        collect_running = True    
-        reply_msg = await message.reply(f"✅ Collect function started using `{current_db_name}` database!\nForward spam enabled!")
+        collect_running = True
+        spam_task = asyncio.create_task(forward_spam())  # Start forward spam
+        reply_msg = await message.reply(f"✅ Collect function started!\nForward spam enabled!")
     else:
         reply_msg = await message.reply("⚠ Collect function is already running!")
 
     await asyncio.sleep(2)
-    await reply_msg.delete()  # Delete after 2 seconds
+    await reply_msg.delete()
 
 @bot.on_message(filters.command("stopcollect") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def stop_collect(_, message: Message):
     global collect_running, spam_task
     collect_running = False
+    if spam_task:
+        spam_task.cancel()
+        spam_task = None
     reply_msg = await message.reply("🛑 Collect function stopped!\nForward spam disabled!")
 
     await asyncio.sleep(2)
-    await reply_msg.delete()  # Delete after 2 seconds
+    await reply_msg.delete()
+
 
 @bot.on_message(filters.command("startmain") & filters.user(ADMIN_USER_IDS))
 async def start_main_collect(_, message: Message):
