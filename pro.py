@@ -285,8 +285,7 @@ async def show_stats(c: Client, m: Message):
 
     await m.reply_text(stats_report)
 
-
-@bot.on_message(filters.command("startprop") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("startprop", prefixes="/") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def start_propose(_, message: Message):
     global propose_running
 
@@ -294,9 +293,16 @@ async def start_propose(_, message: Message):
         await message.delete()
         return
 
-    count = int(message.matches[0].group(1))  # Extract number from command
+    # Extract number from command
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2 or not args[1].isdigit():
+        await message.reply("Usage: /startprop <number>")
+        await message.delete()
+        return
 
+    count = int(args[1])
     if count <= 0:
+        await message.reply("Please enter a positive number.")
         await message.delete()
         return
 
@@ -307,8 +313,8 @@ async def start_propose(_, message: Message):
         if not propose_running:
             break
 
-        sent_msg = await bot.send_message(TARGET_GROUP_ID, ".propose")
-        logging.info(f"Sent .propose command ({i+1}/{count})")
+        sent_msg = await bot.send_message(TARGET_GROUP_ID, "/propose")  # Using "/" instead of "."
+        logging.info(f"Sent /propose command ({i+1}/{count})")
 
         await asyncio.sleep(2)  # Wait 2 seconds before deleting
         await sent_msg.delete()
@@ -319,9 +325,9 @@ async def start_propose(_, message: Message):
     propose_running = False
 
 
-
-@bot.on_message(filters.command("stopprop") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("stopprop", prefixes="/") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def stop_propose(_, message: Message):
+    """Stops the proposal function."""
     global propose_running
     propose_running = False
     await message.delete()
