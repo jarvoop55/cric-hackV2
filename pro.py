@@ -223,7 +223,6 @@ async def extract_file_id(_, message: Message):
     file_unique_id = message.reply_to_message.photo.file_unique_id
     await message.reply(f"📂 **File Unique ID:** `{file_unique_id}`")
 
-
 # Flask health check
 web_app = Flask(__name__)
 
@@ -238,13 +237,12 @@ def run_flask():
 # Start Flask server in a separate thread before Pyrogram starts
 threading.Thread(target=run_flask, daemon=True).start()
 
-
 async def main():
-    """ Runs Pyrogram bot and Flask server concurrently """
+    """Runs Pyrogram bot while Flask runs in the background"""
     preload_players()  # Load players into memory before starting
     await bot.start()
     logging.info("Bot started successfully!")
-    await asyncio.gather(run_flask(), idle())
+    await idle()  # Keeps the bot running
     await bot.stop()
 
 if __name__ == "__main__":
