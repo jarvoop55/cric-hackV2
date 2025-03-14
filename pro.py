@@ -285,50 +285,44 @@ async def show_stats(c: Client, m: Message):
 
     await m.reply_text(stats_report)
 
-@bot.on_message(filters.command("startpropose", prefixes=["."]) & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.regex(r"^\.startpropose (\d+)$") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def start_propose(_, message: Message):
-    """Starts sending .propose commands at intervals of 130 seconds."""
     global propose_running
 
     if propose_running:
-        await message.delete()  # Delete the command message
+        await message.delete()
         return
 
-    args = message.text.split(maxsplit=1)
-    if len(args) < 2 or not args[1].isdigit():
-        await message.delete()  # Delete invalid command message
-        return
+    count = int(message.matches[0].group(1))  # Extract number from command
 
-    count = int(args[1])
     if count <= 0:
-        await message.delete()  # Delete invalid command message
+        await message.delete()
         return
 
     propose_running = True
-    await message.delete()  # Delete the command message
+    await message.delete()
 
     for i in range(count):
         if not propose_running:
-            break  # Stop if function is manually stopped
+            break
 
         sent_msg = await bot.send_message(TARGET_GROUP_ID, ".propose")
         logging.info(f"Sent .propose command ({i+1}/{count})")
 
-        await asyncio.sleep(2)  # Wait 2 seconds before deleting the propose message
+        await asyncio.sleep(2)  # Wait 2 seconds before deleting
         await sent_msg.delete()
 
-        if i < count - 1:  # Avoid sleeping after the last message
-            await asyncio.sleep(130)  # Wait 130 seconds before next proposal
+        if i < count - 1:
+            await asyncio.sleep(130)  # Wait 130 seconds
 
-    propose_running = False  # Reset flag when finished
+    propose_running = False
 
 
-@bot.on_message(filters.command("stoppropose", prefixes=["."]) & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.regex(r"^\.stoppropose$") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def stop_propose(_, message: Message):
-    """Stops the proposal function."""
     global propose_running
     propose_running = False
-    await message.delete()  # Delete the command message
+    await message.delete()
 
 async def main():
     """ Runs Pyrogram bot and Flask server concurrently """
