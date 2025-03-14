@@ -285,7 +285,8 @@ async def show_stats(c: Client, m: Message):
 
     await m.reply_text(stats_report)
 
-@bot.on_message(filters.regex(r"^\.startpropose (\d+)$") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
+
+@bot.on_message(filters.command("startprop") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def start_propose(_, message: Message):
     global propose_running
 
@@ -318,7 +319,8 @@ async def start_propose(_, message: Message):
     propose_running = False
 
 
-@bot.on_message(filters.regex(r"^\.stoppropose$") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
+
+@bot.on_message(filters.command("stopprop") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def stop_propose(_, message: Message):
     global propose_running
     propose_running = False
