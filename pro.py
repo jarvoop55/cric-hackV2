@@ -1,4 +1,5 @@
 import os
+import threading
 import logging
 import asyncio
 import random
@@ -43,20 +44,25 @@ def preload_players():
         logging.error(f"Failed to preload database: {e}")
 
 # Flask health check
+
 web_app = Flask(__name__)
 
 @web_app.route('/health')
 def health_check():
     return "OK", 200
 
-async def run_flask():
-    """ Runs Flask server for health checks """
-    from hypercorn.asyncio import serve
-    from hypercorn.config import Config
+def run_flask():
+    """Runs Flask server for health checks in a background thread"""
+    web_app.run(host="0.0.0.0", port=8080, debug=False, use_reloader=False)
 
-    config = Config()
-    config.bind = ["0.0.0.0:8000"]
-    await serve(web_app, config)
+# Start Flask in a separate thread to avoid blocking the main script
+threading.Thread(target=run_flask, daemon=True).start()
+
+# Main bot logic (Replace with your bot's code)
+while True:
+    print("Main bot running...")
+    import time
+    time.sleep(10)  # Simulate bot work
 
 # Environment variables
 API_ID = os.getenv("API_ID")
