@@ -15,8 +15,8 @@ logging.basicConfig(
 )
 
 # Initialize Databases
-storage_excl = Mukund("Vegeta")
-storage_normal = Mukund("Goku")
+storage_vegeta = Mukund("Vegeta")
+storage_goku = Mukund("Goku")
 
 db_vegeta = storage_vegeta.database("players")
 db_goku = storage_goku.database("players")
@@ -24,7 +24,6 @@ db_goku = storage_goku.database("players")
 # Track active database
 current_db = db_vegeta  # Default database
 current_db_name = "Vegeta"  # Track the name for response messages
-
 # In-memory cache for quick lookups
 player_cache = {}
 
