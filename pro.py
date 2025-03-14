@@ -240,13 +240,12 @@ threading.Thread(target=run_flask, daemon=True).start()
 
 
 async def main():
-    """Runs Pyrogram bot"""
+    """ Runs Pyrogram bot and Flask server concurrently """
+    preload_players()  # Load players into memory before starting
     await bot.start()
     logging.info("Bot started successfully!")
-    await idle()  # Keep bot running
+    await asyncio.gather(run_flask(), idle())
     await bot.stop()
-
-
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
