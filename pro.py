@@ -233,7 +233,7 @@ def health_check():
 
 def run_flask():
     """Runs Flask server in the background."""
-    web_app.run(host="0.0.0.0", port=8080, debug=False, use_reloader=False)
+    web_app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
 
 # Start Flask server in a separate thread before Pyrogram starts
 threading.Thread(target=run_flask, daemon=True).start()
