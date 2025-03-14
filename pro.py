@@ -91,6 +91,7 @@ COLLECTOR_USER_IDS = [
     1710597756, 7828242164, 7957490622
 ]
 
+propose_running = False  # Track if proposing is running
 
 @bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663]))
 async def switch_database(_, message: Message):
@@ -290,20 +291,17 @@ async def start_propose(_, message: Message):
     global propose_running
 
     if propose_running:
-        await message.delete()
         return
 
     # Extract number from command
     args = message.text.split(maxsplit=1)
     if len(args) < 2 or not args[1].isdigit():
         await message.reply("Usage: /startprop <number>")
-        await message.delete()
         return
 
     count = int(args[1])
     if count <= 0:
         await message.reply("Please enter a positive number.")
-        await message.delete()
         return
 
     propose_running = True
@@ -322,7 +320,7 @@ async def start_propose(_, message: Message):
         if i < count - 1:
             await asyncio.sleep(130)  # Wait 130 seconds
 
-    propose_running = False
+      propose_running = False
 
 
 @bot.on_message(filters.command("stopprop", prefixes="/") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
@@ -330,7 +328,6 @@ async def stop_propose(_, message: Message):
     """Stops the proposal function."""
     global propose_running
     propose_running = False
-    await message.delete()
 
 async def main():
     """ Runs Pyrogram bot and Flask server concurrently """
