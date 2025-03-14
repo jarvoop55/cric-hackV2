@@ -286,7 +286,7 @@ async def show_stats(c: Client, m: Message):
 
     await m.reply_text(stats_report)
 
-@bot.on_message(filters.command("startprop") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("startprop") & filters.user(ADMIN_USER_IDS))
 async def start_propose(_, message: Message):
     """Starts proposing multiple times with a delay"""
     global propose_running
@@ -295,8 +295,7 @@ async def start_propose(_, message: Message):
         await message.reply("⚠ Propose function is already running!")
         return
 
-    # Extract number from command
-    args = message.text.split(maxsplit=1)
+    args = message.text.split()
     if len(args) < 2 or not args[1].isdigit():
         await message.reply("Usage: /startprop <number>")
         return
@@ -313,19 +312,19 @@ async def start_propose(_, message: Message):
         if not propose_running:
             break  # Stop if /stopprop is triggered
 
-        sent_msg = await bot.send_message(TARGET_GROUP_ID, "/propose")  
+        sent_msg = await bot.send_message(message.chat.id, "/propose")  
         logging.info(f"Sent /propose command ({i+1}/{count})")
 
-        await asyncio.sleep(2)  # Wait before deleting
+        await asyncio.sleep(2)
         await sent_msg.delete()
 
         if i < count - 1:
-            await asyncio.sleep(130)  # 130 seconds delay before next propose
+            await asyncio.sleep(130)  # 130 seconds delay
 
     propose_running = False
     await message.reply("✅ Propose function completed.")
 
-@bot.on_message(filters.command("stopprop") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("stopprop") & filters.user(ADMIN_USER_IDS))
 async def stop_propose(_, message: Message):
     """Stops the propose command loop"""
     global propose_running
@@ -336,6 +335,7 @@ async def stop_propose(_, message: Message):
 
     propose_running = False
     await message.reply("🛑 Propose function stopped.")
+
 
 async def main():
     """ Runs Pyrogram bot and Flask server concurrently """
