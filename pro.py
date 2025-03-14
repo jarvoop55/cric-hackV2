@@ -285,7 +285,7 @@ async def show_stats(c: Client, m: Message):
 
     await m.reply_text(stats_report)
 
-@bot.on_message(filters.command("propose", prefixes=".") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("startpropose", prefixes=["."]) & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def start_propose(_, message: Message):
     """Starts sending .propose commands at intervals of 130 seconds."""
     global propose_running
@@ -323,13 +323,12 @@ async def start_propose(_, message: Message):
     propose_running = False  # Reset flag when finished
 
 
-@bot.on_message(filters.command("offpropose", prefixes=".") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("stoppropose", prefixes=["."]) & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def stop_propose(_, message: Message):
     """Stops the proposal function."""
     global propose_running
     propose_running = False
     await message.delete()  # Delete the command message
-
 
 async def main():
     """ Runs Pyrogram bot and Flask server concurrently """
