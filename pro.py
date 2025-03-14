@@ -230,20 +230,23 @@ web_app = Flask(__name__)
 def health_check():
     return "OK", 200
 
-def run_flask():
-    """Runs Flask server in the background."""
-    web_app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
+async def run_flask():
+    """ Runs Flask server for health checks """
+    from hypercorn.asyncio import serve
+    from hypercorn.config import Config
 
-# Start Flask server in a separate thread before Pyrogram starts
-threading.Thread(target=run_flask, daemon=True).start()
+    config = Config()
+    config.bind = ["0.0.0.0:5000"]
+    await serve(web_app, config)
 
 async def main():
     """Runs Pyrogram bot while Flask runs in the background"""
     preload_players()  # Load players into memory before starting
     await bot.start()
     logging.info("Bot started successfully!")
-    await idle()  # Keeps the bot running
+    await asyncio.gather(run_flask(), idle())
     await bot.stop()
+    
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
