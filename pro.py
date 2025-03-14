@@ -43,26 +43,7 @@ def preload_players():
     except Exception as e:
         logging.error(f"Failed to preload database: {e}")
 
-# Flask health check
 
-web_app = Flask(__name__)
-
-@web_app.route('/health')
-def health_check():
-    return "OK", 200
-
-def run_flask():
-    """Runs Flask server for health checks in a background thread"""
-    web_app.run(host="0.0.0.0", port=8080, debug=False, use_reloader=False)
-
-# Start Flask in a separate thread to avoid blocking the main script
-threading.Thread(target=run_flask, daemon=True).start()
-
-# Main bot logic (Replace with your bot's code)
-while True:
-    print("Main bot running...")
-    import time
-    time.sleep(10)  # Simulate bot work
 
 # Environment variables
 API_ID = os.getenv("API_ID")
@@ -242,14 +223,28 @@ async def extract_file_id(_, message: Message):
     file_unique_id = message.reply_to_message.photo.file_unique_id
     await message.reply(f"📂 **File Unique ID:** `{file_unique_id}`")
 
+
+# Flask health check
+web_app = Flask(__name__)
+
+@web_app.route('/health')
+def health_check():
+    return "OK", 200
+
+def run_flask():
+    """Runs Flask server in the background."""
+    web_app.run(host="0.0.0.0", port=8080, debug=False, use_reloader=False)
+
+# Start Flask server in a separate thread before Pyrogram starts
+threading.Thread(target=run_flask, daemon=True).start()
+
+
 async def main():
-    """ Runs Pyrogram bot and Flask server concurrently """
-    preload_players()  # Load players into memory before starting
+    """Runs Pyrogram bot"""
     await bot.start()
     logging.info("Bot started successfully!")
-    await asyncio.gather(run_flask(), idle())
+    await idle()  # Keep bot running
     await bot.stop()
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    asyncio.run(main())
