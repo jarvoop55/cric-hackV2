@@ -320,14 +320,8 @@ async def start_propose(_, message: Message):
         if i < count - 1:
             await asyncio.sleep(130)  # Wait 130 seconds
 
-      propose_running = False
+    propose_running = False  # Fixed indentation issue
 
-
-@bot.on_message(filters.command("stopprop", prefixes="/") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
-async def stop_propose(_, message: Message):
-    """Stops the proposal function."""
-    global propose_running
-    propose_running = False
 
 async def main():
     """ Runs Pyrogram bot and Flask server concurrently """
