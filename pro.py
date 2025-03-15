@@ -85,7 +85,7 @@ collect_main_running = False  # For /startmain command in MAIN_GROUP_ID
 ADMIN_USER_IDS = [1745451559, 1710597756, 7522153272, 7946198415, 7742832624, 7859049019, 7828242164, 7957490622]
 # User IDs permitted to trigger the collect function
 COLLECTOR_USER_IDS = [
-    7522153272, 7946198415, 7742832624, 7859049019, 1710597756, 7828242164, 7957490622]
+    7522153272, 7946198415, 7742832624, 7859049019, 1710597756, 7828242164, 7957490622, 7957490622]
 
 
 
@@ -157,9 +157,9 @@ async def stop_main_collect(_, message: Message):
         await message.reply("⚠ Main collect function is not running!")
 
 
-@bot.on_message(filters.photo & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622]))
+@bot.on_message(filters.photo & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622, 8152092974]))
 async def hacke(c: Client, m: Message):
-    """Handles image messages and collects OG players."""
+    """Handles image messages and collects OG players, athletes, and celebrities."""
     global collect_running, collect_main_running
     if not collect_running:
         return
@@ -180,10 +180,14 @@ async def hacke(c: Client, m: Message):
 
         logging.debug(f"Received caption: {m.caption}")
 
-        # Check for the exact caption
-        target_caption = "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ"
+        # Define target captions
+        target_captions = [
+            "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
+            "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴀᴛʜᴇʟᴇᴛᴇ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
+            "❄️ ʟᴏᴏᴋ ᴀɴ ᴀᴡsᴏᴍᴇ ᴄᴇʟᴇʙʀɪᴛʏ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜᴇʀ/ʜɪᴍ ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ"
+        ]
 
-        if m.caption.strip() != target_caption:
+        if m.caption.strip() not in target_captions:
             return
 
         file_id = m.photo.file_unique_id
@@ -211,7 +215,7 @@ async def hacke(c: Client, m: Message):
                 if should_forward_message(reply.text):
                     await reply.forward(FORWARD_CHANNEL_ID)
                     logging.info(f"Forwarded message: {reply.text}")
-                    
+
     except FloodWait as e:
         wait_time = e.value + random.randint(1, 5)
         logging.warning(f"Rate limit hit! Waiting for {wait_time} seconds...")
