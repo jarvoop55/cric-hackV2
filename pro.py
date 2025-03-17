@@ -85,7 +85,7 @@ collect_main_running = False  # For /startmain command in MAIN_GROUP_ID
 ADMIN_USER_IDS = [1745451559, 1710597756, 7522153272, 7946198415, 7742832624, 7859049019, 7828242164, 7957490622, 6523029979]
 # User IDs permitted to trigger the collect function
 COLLECTOR_USER_IDS = [
-    7522153272, 7946198415, 7742832624, 7859049019, 1710597756, 7828242164, 7957490622, 7957490622]
+    7522153272, 7946198415, 7742832624, 7859049019, 1710597756, 7828242164, 7957490622, 7957490622, 7509527964]
 
 
 
@@ -157,7 +157,7 @@ async def stop_main_collect(_, message: Message):
         await message.reply("⚠ Main collect function is not running!")
 
 
-@bot.on_message(filters.photo & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622, 8152092974]))
+@bot.on_message(filters.photo & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622, 8152092974, 7509527964]))
 async def hacke(c: Client, m: Message):
     """Handles image messages and collects OG players, athletes, and celebrities."""
     global collect_running, collect_main_running
