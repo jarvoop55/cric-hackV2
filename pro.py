@@ -237,15 +237,30 @@ async def check_rarity_and_forward(_, message: Message):
                 await bot.send_message(FORWARD_CHANNEL_ID, message.text)
                 break  
 
-@bot.on_message(filters.command("fileid") & filters.user(ADMIN_USER_IDS))
+import logging
+
+@bot.on_message(filters.command("fileid") & filters.group)
 async def extract_file_id(_, message: Message):
-    """Extracts and sends the unique file ID of a replied photo."""
-    if not message.reply_to_message or not message.reply_to_message.photo:
-        await message.reply("⚠ Please reply to a photo to extract the file ID.")
-        return
-    
-    file_unique_id = message.reply_to_message.photo.file_unique_id
-    await message.reply(f"📂 **File Unique ID:** `{file_unique_id}`")
+    """Extracts and sends the unique file ID of a replied photo or video."""
+    try:
+        if not message.reply_to_message:
+            await message.reply("⚠ Please reply to a **photo or video** to extract the file ID.")
+            return
+
+        if message.reply_to_message.photo:
+            file_unique_id = message.reply_to_message.photo.file_unique_id
+            file_type = "Photo"
+        elif message.reply_to_message.video:
+            file_unique_id = message.reply_to_message.video.file_unique_id
+            file_type = "Video"
+        else:
+            await message.reply("⚠ Please reply to a **photo or video** to extract the file ID.")
+            return
+
+        await message.reply(f"📂 **{file_type} Unique ID:** `{file_unique_id}`")
+    except Exception as e:
+        logging.error(f"Error in /fileid command: {e}")
+        await message.reply("❌ An error occurred. Check bot logs.")
 
 async def main():
     """ Runs Pyrogram bot and Flask server concurrently """
