@@ -157,9 +157,9 @@ async def stop_main_collect(_, message: Message):
         await message.reply("⚠ Main collect function is not running!")
 
 
-@bot.on_message(filters.photo & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622, 8152092974, 7509527964]))
+@bot.on_message(filters.photo | filters.video & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622, 8152092974, 7509527964]))
 async def hacke(c: Client, m: Message):
-    """Handles image messages and collects OG players, athletes, and celebrities."""
+    """Handles image and video messages and collects OG players, athletes, and celebrities."""
     global collect_running, collect_main_running
     if not collect_running:
         return
@@ -183,14 +183,20 @@ async def hacke(c: Client, m: Message):
         # Define target captions
         target_captions = [
             "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
-            "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴀᴛʜᴇʟᴇᴛᴇ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
+            "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴀᴛʜʟᴇᴛᴇ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
             "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴄᴇʟᴇʙʀɪᴛʏ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ"
         ]
 
         if m.caption.strip() not in target_captions:
             return
 
-        file_id = m.photo.file_unique_id
+        # Get file ID for photo or video
+        if m.photo:
+            file_id = m.photo.file_unique_id
+        elif m.video:
+            file_id = m.video.file_unique_id
+        else:
+            return
 
         # Use cache for quick lookup
         if file_id in player_cache:
@@ -201,7 +207,7 @@ async def hacke(c: Client, m: Message):
                 player_name = file_data['name']
                 player_cache[file_id] = file_data  # Cache result
             else:
-                logging.warning(f"Image ID {file_id} not found in {current_db_name}!")
+                logging.warning(f"Media ID {file_id} not found in {current_db_name}!")
                 return
 
         logging.info(f"Collecting player: {player_name} from {current_db_name}")
