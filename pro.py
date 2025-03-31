@@ -157,7 +157,7 @@ async def stop_main_collect(_, message: Message):
         await message.reply("⚠ Main collect function is not running!")
 
 
-@bot.on_message(filters.photo | filters.video & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622, 8152092974, 7509527964]))
+@bot.on_message(filters.photo | filters.video & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622, 8152092974, 7509527964, 8079928714]))
 async def hacke(c: Client, m: Message):
     """Handles image and video messages and collects OG players, athletes, and celebrities."""
     global collect_running, collect_main_running
