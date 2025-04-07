@@ -76,7 +76,7 @@ bot = Client(
 RARITIES_TO_FORWARD = ["Cosmic", "Limited Edition", "Exclusive", "Ultimate"]
 TARGET_GROUP_ID = -1002348881334  # Original target group
 MAIN_GROUP_ID = -1002436920609 # Main group for /startmain command
-FORWARD_CHANNEL_ID = -1002264265999 # Forwarding channel (disabled)
+FORWARD_CHANNEL_ID =  -1002260368357  # Forwarding channel (disabled)
 # Control flags for collect functions
 collect_running = False
 # For /startcollect command in TARGET_GROUP_ID
@@ -235,7 +235,7 @@ async def check_rarity_and_forward(_, message: Message):
     if not message.text:
         return  
 
-    if "🎯 Look You Collected A" in message.text:
+    if "✅ Look You Collected A " in message.text:
         logging.info(f"Checking message for rarity:\n{message.text}")
 
         for rarity in RARITIES_TO_FORWARD:
