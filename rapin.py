@@ -295,7 +295,7 @@ async def stop_main_collect(_, message: Message):
     except Exception as e:
         logging.error(f"Error in stop_main_collect: {e}")
 
-@bot.on_message(filters.command("status") & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("colstats") & filters.user(ADMIN_USER_IDS))
 async def status_command(_, message: Message):
     """Shows the current status of the collector bot."""
     uptime_seconds = int(time.time() - start_time)
@@ -313,7 +313,7 @@ async def status_command(_, message: Message):
     
     await message.reply(status_text)
 
-@bot.on_message(filters.command("refresh") & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("colrefresh") & filters.user(ADMIN_USER_IDS))
 async def refresh_cache(_, message: Message):
     """Refresh the player cache from the database."""
     try:
@@ -545,7 +545,7 @@ async def add_player(_, message: Message):
         logging.error(f"Error adding player: {e}")
         await message.reply(f"❌ Error adding player: {str(e)}")
 
-@bot.on_message(filters.command("help") & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("colhelp") & filters.user(ADMIN_USER_IDS))
 async def help_command(_, message: Message):
     """Display available commands and their usage."""
     help_text = """
