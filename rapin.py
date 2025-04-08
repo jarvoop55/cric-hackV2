@@ -170,12 +170,12 @@ ADMIN_USER_IDS = [1745451559, 1710597756, 7522153272, 7946198415, 7742832624, 78
 # User IDs permitted to trigger the collect function
 COLLECTOR_USER_IDS = [
     7522153272, 7946198415, 7742832624, 7859049019, 1710597756, 7828242164, 
-    7957490622, 7957490622, 7509527964
+    7957490622, 7957490622, 7509527964, 8079928714
 ]
 
 # Rate limiting for collect commands
 last_collect_time = {}
-COLLECT_COOLDOWN = 5  # seconds between collects
+COLLECT_COOLDOWN = 2  # seconds between collects
 
 # Target captions to look for
 TARGET_CAPTIONS = [
