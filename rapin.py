@@ -151,8 +151,6 @@ bot = Client(
     session_string=SESSION_STRING,
     workers=25,  # Increased workers for better concurrency
     max_concurrent_transmissions=15,  # Increased for better throughput
-    sleep_threshold=30,  # Lower sleep threshold for faster response
-    flood_sleep_threshold=60  # Handle flood wait more gracefully
 )
 
 # Configuration settings
