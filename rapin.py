@@ -40,7 +40,7 @@ except Exception as e:
 
 # In-memory cache with TTL for performance optimization
 class TTLCache:
-    def __init__(self, ttl_seconds: int = 3600):
+    def __init__(self, ttl_seconds: int = 72000):
         self.cache: Dict[str, Dict[str, Any]] = {}
         self.timestamps: Dict[str, float] = {}
         self.ttl_seconds = ttl_seconds
@@ -71,7 +71,7 @@ class TTLCache:
         return len(self.cache)
 
 # Initialize cache with 1-hour TTL
-player_cache = TTLCache(ttl_seconds=3600)
+player_cache = TTLCache(ttl_seconds=72000)
 
 def preload_players() -> None:
     """Load players into cache from the active database with retry logic."""
@@ -339,7 +339,7 @@ async def handle_media(c: Client, m: Message):
 
     try:
         # Add slight randomization to appear more human-like
-        await asyncio.sleep(random.uniform(0.8, 2.2))
+        await asyncio.sleep(random.uniform(0.8, 1.2))
 
         if not m.caption:
             return
