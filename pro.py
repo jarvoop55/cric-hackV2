@@ -212,24 +212,27 @@ async def check_status(_, message: Message):
     
     await message.reply(status_text)
 
-# For backward compatibility
+# Modified to start collection in all groups
 @bot.on_message(filters.command("startcollect") & filters.chat(TARGET_GROUP_IDS) & filters.user(ADMIN_USER_IDS))
 async def start_collect(_, message: Message):
-    group_id = message.chat.id
-    if not collection_status.get(group_id, False):
+    # Start collection in all target groups
+    for group_id in TARGET_GROUP_IDS:
         collection_status[group_id] = True
-        reply_msg = await message.reply(f"✅ Collect function started in this group!")
-    else:
-        reply_msg = await message.reply("⚠ Collect function is already running in this group!")
-
+    
+    reply_msg = await message.reply(f"✅ Collection started in ALL target groups!")
+    logging.info("Collection started in all target groups via /startcollect command")
+    
     await asyncio.sleep(2)
     await reply_msg.delete()
 
 @bot.on_message(filters.command("stopcollect") & filters.chat(TARGET_GROUP_IDS) & filters.user(ADMIN_USER_IDS))
 async def stop_collect(_, message: Message):
-    group_id = message.chat.id
-    collection_status[group_id] = False
-    reply_msg = await message.reply("🛑 Collect function stopped in this group!")
+    # Stop collection in all target groups 
+    for group_id in TARGET_GROUP_IDS:
+        collection_status[group_id] = False
+        
+    reply_msg = await message.reply("🛑 Collection stopped in ALL target groups!")
+    logging.info("Collection stopped in all target groups via /stopcollect command")
 
     await asyncio.sleep(2)
     await reply_msg.delete()
@@ -279,7 +282,7 @@ async def hacke(c: Client, m: Message):
             "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ"
         ]
 
-        if m.caption.strip() != target_caption:
+        if m.caption.strip() not in target_caption:
             return
 
         file_id = m.photo.file_unique_id
