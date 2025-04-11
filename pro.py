@@ -15,15 +15,15 @@ logging.basicConfig(
 )
 
 # Initialize Databases
-storage_excl = Mukund("Excl")
-storage_normal = Mukund("Normal")
+storage_excl = Mukund("Goku")
+storage_normal = Mukund("Vegeta")
 
 db_excl = storage_excl.database("players")
 db_normal = storage_normal.database("players")
 
 # Track active database
-current_db = db_normal  # Default database
-current_db_name = "Normal"  # Track the name for response messages
+current_db = db_vegeta  # Default database
+current_db_name = "Vegeta"  # Track the name for response messages
 
 # In-memory cache for quick lookups
 player_cache = {}
@@ -81,7 +81,7 @@ TARGET_GROUP_IDS = [
     -1002348881334
 ] # Target groups
 MAIN_GROUP_ID = -1002499388382 # Main group for /startmain command
-FORWARD_CHANNEL_ID = -1002264265999 # Forwarding channel
+FORWARD_CHANNEL_ID = -1002260368357 # Forwarding channel
 
 # Track collection status for each group
 collection_status = {group_id: False for group_id in TARGET_GROUP_IDS}
@@ -112,14 +112,14 @@ async def switch_database(_, message: Message):
 
     new_db_name = message.text.split(maxsplit=1)[1].strip().lower() if len(message.text.split()) > 1 else ""
     
-    if new_db_name == "excl":
-        current_db = db_excl
-        current_db_name = "Excl"
-    elif new_db_name == "normal":
-        current_db = db_normal
-        current_db_name = "Normal"
+    if new_db_name == "goku":
+        current_db = db_goku
+        current_db_name = "Goku"
+    elif new_db_name == "vegeta":
+        current_db = db_vegeta
+        current_db_name = "Vegeta"
     else:
-        await message.reply("⚠ Invalid database! Use: `/switchdb excl` or `/switchdb normal`")
+        await message.reply("⚠ Invalid database! Use: `/switchdb goku` or `/switchdb vegeta`")
         return
 
     preload_players()  # Reload cache with new database
@@ -272,7 +272,12 @@ async def hacke(c: Client, m: Message):
         logging.debug(f"Received caption in group {group_id}: {m.caption}")
 
         # Check for the exact caption
-        target_caption = "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ"
+        target_captions = [
+            "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
+            "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴀᴛʜʟᴇᴛᴇ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
+            "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴄᴇʟᴇʙʀɪᴛʏ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
+            "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ"
+        ]
 
         if m.caption.strip() != target_caption:
             return
