@@ -15,15 +15,16 @@ logging.basicConfig(
 )
 
 # Initialize Databases
-storage_vegeta = Mukund("Vegeta")
-storage_goku = Mukund("Goku")
+storage_excl = Mukund("Excl")
+storage_normal = Mukund("Normal")
 
-db_vegeta = storage_vegeta.database("players")
-db_goku = storage_goku.database("players")
+db_excl = storage_excl.database("players")
+db_normal = storage_normal.database("players")
 
 # Track active database
-current_db = db_vegeta  # Default database
-current_db_name = "Vegeta"  # Track the name for response messages
+current_db = db_normal  # Default database
+current_db_name = "Normal"  # Track the name for response messages
+
 # In-memory cache for quick lookups
 player_cache = {}
 
@@ -60,9 +61,7 @@ async def run_flask():
 # Environment variables
 API_ID = 20061115
 API_HASH = "c30d56d90d59b3efc7954013c580e076"
-SESSION_STRING = "BQA4ntkAdv7Yn7dZ2dN67mPWA6EFx5_eCStgr205gdPHAe3pMkWrgZt11XIpdOpTvVUMEdbRA2em8es5klLLkZ0PgeU1k9F4wcxRLzCUnmvW-0F2fq3NODO7GP-Pgxyfxw1YZGTtHzHQ4za6GHeIsAnGQpGRdmpl6PgIZGVBomKoZpYr2U446urNs-pqwPtXW5GbfUXTOAnAg0blpP3f5MC6eyI4uTN05Vhdhc0IRdoYU8i8oO6eBzAWxHF4au4B-OuCgH1FxIFOmmoDhQcKPlvMHL_SoddADZgKGkqbVTjjQt91rNZUdvbgOpYAye1mEA3ZIRUFdHArO4QLVp9Ta89zjppWRQAAAAGEzYnbAA"
-
-
+SESSION_STRING = "BAA4ntkAwR8LSVOMhKnnCK34b9fV8uNUh4Z2bYDz97lP8Isj21eBPF1gAqyVqxxlN73RHLTF53vIVWpNDnEMysXOpy6OUb2DkQWge20ZNLkE8uPj06CL0S0DYEXZnMaQ2tXBOoGbJVGBicKwqjgfWhLkCJazHF0jUXQ4ksXg2HpEdw9FwaD5Hj5WPitPwf9_ovQQ9tW9ndGXY8C2DUd5eYK2p1kr7mTEJ8CuEW9K96QA-AO5mL4KTKb1g9Nah3LLP8Q4ybKvvSG_49PzONiUlQUmPc8qMxEdA2z6L5lFIoTki_PyD-_cZkDUg6tOPtDe58diMSV9S09VA4SdInLTBuwECzSLOQAAAAG0gI6SAA"
 
 bot = Client(
     "pro",
@@ -74,107 +73,195 @@ bot = Client(
 )
 
 RARITIES_TO_FORWARD = ["Cosmic", "Limited Edition", "Exclusive", "Ultimate"]
-TARGET_GROUP_ID = -1002348881334  # Original target group
-MAIN_GROUP_ID = [-1002404629452,
+TARGET_GROUP_IDS = [
+    -1002404629452,
     -1002510720624,
     -1002482984360,
     -1002607746947,
-    -1002348881334] # Main group for /startmain command
-FORWARD_CHANNEL_ID =  -1002260368357  # Forwarding channel (disabled)
-# Control flags for collect functions
-collect_running = False
-# For /startcollect command in TARGET_GROUP_ID
-collect_main_running = False  # For /startmain command in MAIN_GROUP_ID
-# Admin User IDs (replace with actual admin IDs)
-ADMIN_USER_IDS = [1745451559, 1710597756, 7522153272, 7946198415, 7742832624, 7859049019, 7828242164, 7957490622, 6523029979]
+    -1002348881334
+] # Target groups
+MAIN_GROUP_ID = -1002499388382 # Main group for /startmain command
+FORWARD_CHANNEL_ID = -1002264265999 # Forwarding channel
+
+# Track collection status for each group
+collection_status = {group_id: False for group_id in TARGET_GROUP_IDS}
+collection_status[MAIN_GROUP_ID] = False  # Also track main group
+
+# Admin User IDs
+ADMIN_USER_IDS = [1745451559, 1710597756, 7522153272, 7946198415, 7742832624, 7859049019, 7828242164, 7957490622, 7323291282, 6523029979]
 # User IDs permitted to trigger the collect function
 COLLECTOR_USER_IDS = [
-    7522153272, 7946198415, 7742832624, 7859049019, 1710597756, 7828242164, 7957490622, 7957490622, 7509527964]
+    7522153272, 7946198415, 7742832624, 7859049019, 1710597756, 7828242164, 7957490622, 7323291282
+]
 
+def should_forward_message(text):
+    """Check if a message contains rare celebrity criteria for forwarding"""
+    if not text:
+        return False
+    
+    for rarity in RARITIES_TO_FORWARD:
+        if f"Rarity : {rarity}" in text:
+            return True
+    
+    return False
 
-
-
-@bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_ID) & filters.user([7508462500, 1710597756, 6895497681, 7435756663, 6523029979]))
+@bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_IDS + [MAIN_GROUP_ID]) & filters.user([7508462500, 1710597756, 6895497681, 7435756663, 7323291282, 6523029979]))
 async def switch_database(_, message: Message):
-    """Switch between Vegeta and Goku databases."""
+    """Switch between databases."""
     global current_db, current_db_name, player_cache
 
     new_db_name = message.text.split(maxsplit=1)[1].strip().lower() if len(message.text.split()) > 1 else ""
     
-    if new_db_name == "vegeta":
-        current_db = db_vegeta
-        current_db_name = "Vegeta"
-    elif new_db_name == "goku":
-        current_db = db_goku
-        current_db_name = "Goku"
+    if new_db_name == "excl":
+        current_db = db_excl
+        current_db_name = "Excl"
+    elif new_db_name == "normal":
+        current_db = db_normal
+        current_db_name = "Normal"
     else:
-        await message.reply("⚠ Invalid database! Use: `/switchdb vegeta` or `/switchdb goku`")
+        await message.reply("⚠ Invalid database! Use: `/switchdb excl` or `/switchdb normal`")
         return
 
     preload_players()  # Reload cache with new database
     await message.reply(f"✅ Switched to **{current_db_name}** database.")
 
+@bot.on_message(filters.command("startgroup") & filters.user(ADMIN_USER_IDS))
+async def start_group_collect(_, message: Message):
+    """Start collection in a specific group."""
+    try:
+        args = message.text.split()
+        if len(args) < 2:
+            await message.reply("⚠ Usage: `/startgroup [group_id]` or `/startgroup all`")
+            return
+            
+        target = args[1].lower()
+        
+        if target == "all":
+            # Start in all groups
+            for group_id in TARGET_GROUP_IDS:
+                collection_status[group_id] = True
+            await message.reply("✅ Collection started in ALL target groups!")
+            logging.info("Collection started in all target groups")
+        else:
+            # Try to parse as a group ID
+            try:
+                group_id = int(target)
+                if group_id in TARGET_GROUP_IDS or group_id == MAIN_GROUP_ID:
+                    collection_status[group_id] = True
+                    group_name = "main group" if group_id == MAIN_GROUP_ID else f"group {group_id}"
+                    await message.reply(f"✅ Collection started in {group_name}!")
+                    logging.info(f"Collection started in {group_name}")
+                else:
+                    await message.reply("⚠ Group ID not in configured targets!")
+            except ValueError:
+                await message.reply("⚠ Invalid group ID format!")
+    except Exception as e:
+        logging.error(f"Error in start_group_collect: {e}")
+        await message.reply(f"⚠ Error: {str(e)}")
 
-@bot.on_message(filters.command("startcollect") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("stopgroup") & filters.user(ADMIN_USER_IDS))
+async def stop_group_collect(_, message: Message):
+    """Stop collection in a specific group."""
+    try:
+        args = message.text.split()
+        if len(args) < 2:
+            await message.reply("⚠ Usage: `/stopgroup [group_id]` or `/stopgroup all`")
+            return
+            
+        target = args[1].lower()
+        
+        if target == "all":
+            # Stop in all groups
+            for group_id in TARGET_GROUP_IDS + [MAIN_GROUP_ID]:
+                collection_status[group_id] = False
+            await message.reply("🛑 Collection stopped in ALL groups!")
+            logging.info("Collection stopped in all groups")
+        else:
+            # Try to parse as a group ID
+            try:
+                group_id = int(target)
+                if group_id in collection_status:
+                    collection_status[group_id] = False
+                    group_name = "main group" if group_id == MAIN_GROUP_ID else f"group {group_id}"
+                    await message.reply(f"🛑 Collection stopped in {group_name}!")
+                    logging.info(f"Collection stopped in {group_name}")
+                else:
+                    await message.reply("⚠ Group ID not in configured targets!")
+            except ValueError:
+                await message.reply("⚠ Invalid group ID format!")
+    except Exception as e:
+        logging.error(f"Error in stop_group_collect: {e}")
+        await message.reply(f"⚠ Error: {str(e)}")
+
+@bot.on_message(filters.command("status") & filters.chat(TARGET_GROUP_IDS) & filters.user(ADMIN_USER_IDS))
+async def check_status(_, message: Message):
+    """Check collection status in all groups."""
+    status_text = "📊 **Collection Status**:\n\n"
+    
+    # Main group status
+    main_status = "✅ Active" if collection_status.get(MAIN_GROUP_ID, False) else "🛑 Inactive"
+    status_text += f"**Main Group**: {main_status}\n\n"
+    
+    # Target groups status
+    status_text += "**Target Groups**:\n"
+    for i, group_id in enumerate(TARGET_GROUP_IDS, 1):
+        group_status = "✅ Active" if collection_status.get(group_id, False) else "🛑 Inactive"
+        status_text += f"{i}. Group `{group_id}`: {group_status}\n"
+    
+    status_text += f"\n**Database**: {current_db_name}"
+    
+    await message.reply(status_text)
+
+# For backward compatibility
+@bot.on_message(filters.command("startcollect") & filters.chat(TARGET_GROUP_IDS) & filters.user(ADMIN_USER_IDS))
 async def start_collect(_, message: Message):
-    global collect_running, spam_task
-    if not collect_running:
-        collect_running = True
-          # Start forward spam
-        reply_msg = await message.reply(f"✅ Collect function started!")
+    group_id = message.chat.id
+    if not collection_status.get(group_id, False):
+        collection_status[group_id] = True
+        reply_msg = await message.reply(f"✅ Collect function started in this group!")
     else:
-        reply_msg = await message.reply("⚠ Collect function is already running!")
+        reply_msg = await message.reply("⚠ Collect function is already running in this group!")
 
     await asyncio.sleep(2)
     await reply_msg.delete()
 
-@bot.on_message(filters.command("stopcollect") & filters.chat(TARGET_GROUP_ID) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("stopcollect") & filters.chat(TARGET_GROUP_IDS) & filters.user(ADMIN_USER_IDS))
 async def stop_collect(_, message: Message):
-    global collect_running, spam_task
-    collect_running = False
-    reply_msg = await message.reply("🛑 Collect function stopped!")
+    group_id = message.chat.id
+    collection_status[group_id] = False
+    reply_msg = await message.reply("🛑 Collect function stopped in this group!")
 
     await asyncio.sleep(2)
     await reply_msg.delete()
 
-@bot.on_message(filters.command("startmain") & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("startmain") & filters.chat(MAIN_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def start_main_collect(_, message: Message):
     """Starts the main collect function but only affects MAIN_GROUP_ID."""
-    global collect_main_running
-    if not collect_main_running:
-        collect_main_running = True
+    if not collection_status.get(MAIN_GROUP_ID, False):
+        collection_status[MAIN_GROUP_ID] = True
         await message.reply("✅ Main collect function started!")
         logging.info("Main collect function started in MAIN_GROUP_ID.")
     else:
         await message.reply("⚠ Main collect function is already running!")
 
-
-@bot.on_message(filters.command("stopmain") & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("stopmain") & filters.chat(MAIN_GROUP_ID) & filters.user(ADMIN_USER_IDS))
 async def stop_main_collect(_, message: Message):
     """Stops the main collect function but only affects MAIN_GROUP_ID."""
-    global collect_main_running
-    if collect_main_running:
-        collect_main_running = False
+    if collection_status.get(MAIN_GROUP_ID, False):
+        collection_status[MAIN_GROUP_ID] = False
         await message.reply("🛑 Main collect function stopped!")
         logging.info("Main collect function stopped in MAIN_GROUP_ID.")
     else:
         await message.reply("⚠ Main collect function is not running!")
 
-
-@bot.on_message(filters.photo | filters.video & filters.chat(TARGET_GROUP_ID) & filters.user([7522153272, 7946198415, 7742832624, 1710597756, 7828242164, 7957490622, 8152092974, 7509527964, 8079928714]))
+@bot.on_message(filters.photo & (filters.chat(TARGET_GROUP_IDS) | filters.chat(MAIN_GROUP_ID)) & filters.user(COLLECTOR_USER_IDS))
 async def hacke(c: Client, m: Message):
-    """Handles image and video messages and collects OG players, athletes, and celebrities."""
-    global collect_running, collect_main_running
-    if not collect_running:
+    """Handles image messages and collects OG players."""
+    group_id = m.chat.id
+    
+    # Check if collection is active in this group
+    if not collection_status.get(group_id, False):
         return
-    if m.chat.id == TARGET_GROUP_ID:
-        if not collect_running:
-            return
-    elif m.chat.id == MAIN_GROUP_ID:
-        if not collect_main_running:
-            return
-    else:
-        return  # Ignore messages from other groups
 
     try:
         await asyncio.sleep(random.uniform(1.0, 2.0))
@@ -182,26 +269,15 @@ async def hacke(c: Client, m: Message):
         if not m.caption:
             return
 
-        logging.debug(f"Received caption: {m.caption}")
+        logging.debug(f"Received caption in group {group_id}: {m.caption}")
 
-        # Define target captions
-        target_captions = [
-            "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
-            "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴀᴛʜʟᴇᴛᴇ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
-            "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴄᴇʟᴇʙʀɪᴛʏ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
-            "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ"
-        ]
+        # Check for the exact caption
+        target_caption = "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ"
 
-        if m.caption.strip() not in target_captions:
+        if m.caption.strip() != target_caption:
             return
 
-        # Get file ID for photo or video
-        if m.photo:
-            file_id = m.photo.file_unique_id
-        elif m.video:
-            file_id = m.video.file_unique_id
-        else:
-            return
+        file_id = m.photo.file_unique_id
 
         # Use cache for quick lookup
         if file_id in player_cache:
@@ -212,66 +288,108 @@ async def hacke(c: Client, m: Message):
                 player_name = file_data['name']
                 player_cache[file_id] = file_data  # Cache result
             else:
-                logging.warning(f"Media ID {file_id} not found in {current_db_name}!")
+                logging.warning(f"Image ID {file_id} not found in {current_db_name}!")
                 return
 
-        logging.info(f"Collecting player: {player_name} from {current_db_name}")
+        logging.info(f"Collecting player: {player_name} from {current_db_name} in group {group_id}")
         sent_message = await bot.send_message(m.chat.id, f"/collect {player_name}")
 
         # Wait for bot's reply
         await asyncio.sleep(1)
 
-        async for reply in bot.get_chat_history(m.chat.id, limit=5):  # FIXED
+        # Look for replies to our collect command
+        async for reply in bot.get_chat_history(m.chat.id, limit=5):
             if reply.reply_to_message and reply.reply_to_message.message_id == sent_message.message_id:
                 if should_forward_message(reply.text):
                     await reply.forward(FORWARD_CHANNEL_ID)
-                    logging.info(f"Forwarded message: {reply.text}")
-
+                    logging.info(f"Forwarded rare message from group {group_id}: {reply.text}")
+                    
     except FloodWait as e:
         wait_time = e.value + random.randint(1, 5)
-        logging.warning(f"Rate limit hit! Waiting for {wait_time} seconds...")
+        logging.warning(f"Rate limit hit in group {group_id}! Waiting for {wait_time} seconds...")
         await asyncio.sleep(wait_time)
     except Exception as e:
-        logging.error(f"Error processing message: {e}")
+        logging.error(f"Error processing message in group {group_id}: {e}")
 
-@bot.on_message(filters.chat(TARGET_GROUP_ID))
+@bot.on_message(filters.chat(TARGET_GROUP_IDS + [MAIN_GROUP_ID]))
 async def check_rarity_and_forward(_, message: Message):
     if not message.text:
         return  
 
-    if "✅ Look You Collected A " in message.text:
-        logging.info(f"Checking message for rarity:\n{message.text}")
+    if "🎯 Look You Collected A" in message.text:
+        group_id = message.chat.id
+        logging.info(f"Checking message for rarity in group {group_id}:\n{message.text}")
 
         for rarity in RARITIES_TO_FORWARD:
             if f"Rarity : {rarity}" in message.text:
-                logging.info(f"Detected {rarity} celebrity! Forwarding...")
-                await bot.send_message(FORWARD_CHANNEL_ID, message.text)
-                break  
+                logging.info(f"Detected {rarity} celebrity in group {group_id}! Forwarding...")
+                await bot.send_message(FORWARD_CHANNEL_ID, f"From group {group_id}:\n\n{message.text}")
+                break
 
-import logging
-
-@bot.on_message(filters.command("fileid") & filters.group)
+@bot.on_message(filters.command("fileid") & filters.user(ADMIN_USER_IDS))
 async def extract_file_id(_, message: Message):
-    """Extracts and sends the unique file ID of a replied photo or video."""
+    """Extracts and sends the unique file ID of a replied photo."""
+    if not message.reply_to_message or not message.reply_to_message.photo:
+        await message.reply("⚠ Please reply to a photo to extract the file ID.")
+        return
+    
+    file_unique_id = message.reply_to_message.photo.file_unique_id
+    await message.reply(f"📂 **File Unique ID:** `{file_unique_id}`")
+
+@bot.on_message(filters.command(["addgroup", "delgroup"]) & filters.user(ADMIN_USER_IDS))
+async def manage_groups(_, message: Message):
+    """Add or remove a group from target groups."""
+    global TARGET_GROUP_IDS, collection_status
+    
+    command = message.command[0]
+    is_add = command == "addgroup"
+    action_word = "add" if is_add else "remove"
+    
+    if len(message.command) != 2:
+        await message.reply(f"⚠ Usage: `/{command} [group_id]`")
+        return
+    
     try:
-        if not message.reply_to_message:
-            await message.reply("⚠ Please reply to a **photo or video** to extract the file ID.")
-            return
-
-        if message.reply_to_message.photo:
-            file_unique_id = message.reply_to_message.photo.file_unique_id
-            file_type = "Photo"
-        elif message.reply_to_message.video:
-            file_unique_id = message.reply_to_message.video.file_unique_id
-            file_type = "Video"
+        group_id = int(message.command[1])
+        
+        if is_add:
+            if group_id in TARGET_GROUP_IDS:
+                await message.reply(f"⚠ Group `{group_id}` is already in target groups!")
+                return
+                
+            TARGET_GROUP_IDS.append(group_id)
+            collection_status[group_id] = False  # Add to status tracking with default off
+            await message.reply(f"✅ Group `{group_id}` added to target groups!")
+            logging.info(f"Added group {group_id} to target groups")
         else:
-            await message.reply("⚠ Please reply to a **photo or video** to extract the file ID.")
-            return
-
-        await message.reply(f"📂 **{file_type} Unique ID:** `{file_unique_id}`")
+            if group_id not in TARGET_GROUP_IDS:
+                await message.reply(f"⚠ Group `{group_id}` is not in target groups!")
+                return
+                
+            TARGET_GROUP_IDS.remove(group_id)
+            if group_id in collection_status:
+                del collection_status[group_id]  # Remove from status tracking
+            await message.reply(f"✅ Group `{group_id}` removed from target groups!")
+            logging.info(f"Removed group {group_id} from target groups")
+    
+    except ValueError:
+        await message.reply(f"⚠ Invalid group ID format! Please provide a valid integer.")
     except Exception as e:
-        logging.error(f"Error in /fileid command: {e}")
-        await message.reply("❌ An error occurred. Check bot logs.")
+        logging.error(f"Error in {action_word}_group: {e}")
+        await message.reply(f"⚠ Error: {str(e)}")
+
+@bot.on_message(filters.command("groups") & filters.user(ADMIN_USER_IDS))
+async def list_groups(_, message: Message):
+    """List all target groups."""
+    groups_text = "📋 **Target Groups**:\n\n"
+    
+    for i, group_id in enumerate(TARGET_GROUP_IDS, 1):
+        groups_text += f"{i}. `{group_id}`\n"
+    
+    groups_text += f"\n**Main Group**: `{MAIN_GROUP_ID}`\n"
+    groups_text += f"**Forward Channel**: `{FORWARD_CHANNEL_ID}`"
+    
+    await message.reply(groups_text)
 
 async def main():
     """ Runs Pyrogram bot and Flask server concurrently """
