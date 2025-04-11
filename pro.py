@@ -62,7 +62,6 @@ async def run_flask():
 API_ID = 20061115
 API_HASH = "c30d56d90d59b3efc7954013c580e076"
 SESSION_STRING = "BQA4ntkAMRaMnCqRqsLaL1CD3Oi5BzKvwhxCwibfERFVIrF3DLO9NldBcmhWbt_OuYHsOayXs9AsogmxR6pYzAl8N5_t_xPCCmJYqM1j0O7wsyhGKKDoPC7ssun92OkWSihjlCALbW8KcHYS9X80spgCieMuilFbRuA1G2iW5Osf01t1NC3iihPtzNbvouTffKA53KTqr0fnrx3rTW3-suVmfknfed3h2QFUPqP_gBLtAA_d5CtLLUAeyF52LEO3bAfXfH-sJ54vretEE5paoezQ7q6rXWob2LtKK9eqgHOb2b_tZ8BsCVLuu_7X-d-OSE4B9NC8emdz4wg3rOvelLIn5RM19wAAAAGEzYnbAA"
-"
 
 bot = Client(
     "pro",
