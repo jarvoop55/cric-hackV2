@@ -61,7 +61,8 @@ async def run_flask():
 # Environment variables
 API_ID = 20061115
 API_HASH = "c30d56d90d59b3efc7954013c580e076"
-SESSION_STRING = "BAA4ntkAwR8LSVOMhKnnCK34b9fV8uNUh4Z2bYDz97lP8Isj21eBPF1gAqyVqxxlN73RHLTF53vIVWpNDnEMysXOpy6OUb2DkQWge20ZNLkE8uPj06CL0S0DYEXZnMaQ2tXBOoGbJVGBicKwqjgfWhLkCJazHF0jUXQ4ksXg2HpEdw9FwaD5Hj5WPitPwf9_ovQQ9tW9ndGXY8C2DUd5eYK2p1kr7mTEJ8CuEW9K96QA-AO5mL4KTKb1g9Nah3LLP8Q4ybKvvSG_49PzONiUlQUmPc8qMxEdA2z6L5lFIoTki_PyD-_cZkDUg6tOPtDe58diMSV9S09VA4SdInLTBuwECzSLOQAAAAG0gI6SAA"
+SESSION_STRING = "BQA4ntkAdv7Yn7dZ2dN67mPWA6EFx5_eCStgr205gdPHAe3pMkWrgZt11XIpdOpTvVUMEdbRA2em8es5klLLkZ0PgeU1k9F4wcxRLzCUnmvW-0F2fq3NODO7GP-Pgxyfxw1YZGTtHzHQ4za6GHeIsAnGQpGRdmpl6PgIZGVBomKoZpYr2U446urNs-pqwPtXW5GbfUXTOAnAg0blpP3f5MC6eyI4uTN05Vhdhc0IRdoYU8i8oO6eBzAWxHF4au4B-OuCgH1FxIFOmmoDhQcKPlvMHL_SoddADZgKGkqbVTjjQt91rNZUdvbgOpYAye1mEA3ZIRUFdHArO4QLVp9Ta89zjppWRQAAAAGEzYnbAA"
+"
 
 bot = Client(
     "pro",
@@ -276,7 +277,7 @@ async def hacke(c: Client, m: Message):
             "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
             "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴀᴛʜʟᴇᴛᴇ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
             "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴄᴇʟᴇʙʀɪᴛʏ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
-            "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ"
+            "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ"
         ]
 
         if m.caption.strip() != target_caption:
