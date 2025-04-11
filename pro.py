@@ -15,11 +15,11 @@ logging.basicConfig(
 )
 
 # Initialize Databases
-storage_excl = Mukund("Goku")
-storage_normal = Mukund("Vegeta")
+storage_goku = Mukund("Goku")
+storage_vegeta = Mukund("Vegeta")
 
-db_goku = storage_excl.database("players")
-db_vegeta = storage_normal.database("players")
+db_goku = storage_goku.database("players")
+db_vegeta = storage_vegeta.database("players")
 
 # Track active database
 current_db = db_vegeta  # Default database
