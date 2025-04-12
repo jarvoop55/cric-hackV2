@@ -91,7 +91,7 @@ collection_status[MAIN_GROUP_ID] = False  # Also track main group
 ADMIN_USER_IDS = [1745451559, 1710597756, 7522153272, 7946198415, 7742832624, 7859049019, 7828242164, 7957490622, 7323291282, 6523029979]
 # User IDs permitted to trigger the collect function
 COLLECTOR_USER_IDS = [
-    7522153272, 7946198415, 7742832624, 7859049019, 1710597756, 7828242164, 7957490622, 7323291282
+    7522153272, 7946198415, 7742832624, 7859049019, 1710597756, 7828242164, 7957490622, 7323291282, 8131155741, 8079928714, 7509527964, 7509527964
 ]
 
 def should_forward_message(text):
@@ -324,7 +324,7 @@ async def check_rarity_and_forward(_, message: Message):
     if not message.text:
         return  
 
-    if "🎯 Look You Collected A" in message.text:
+    if "✅ Look You Collected A" in message.text:
         group_id = message.chat.id
         logging.info(f"Checking message for rarity in group {group_id}:\n{message.text}")
 
