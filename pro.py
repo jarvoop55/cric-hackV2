@@ -409,7 +409,7 @@ async def main():
     
     await bot.start()
     logging.info("Bot started successfully!")
-    logging.info(f"Monitoring {len(MONITORED_GROUPS)} groups: {MONITORED_GROUPS}")
+    logging.info(f"Monitoring {len(TARGET_GROUP_IDS)} groups: {TARGET_GROUP_IDS}")
     await idle()
     await bot.stop()
 
