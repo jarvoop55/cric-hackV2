@@ -43,7 +43,7 @@ def preload_players():
         logging.error(f"Failed to preload database: {e}")
 
 # Flask health check
-web_app = Flask(name)
+web_app = Flask(__name__)
 
 @web_app.route('/health')
 def health_check():
