@@ -43,20 +43,19 @@ def preload_players():
         logging.error(f"Failed to preload database: {e}")
 
 # Flask health check
-web_app = Flask(__name__)
+web_app = Flask(name)
 
 @web_app.route('/health')
 def health_check():
     return "OK", 200
 
-async def run_flask():
-    """ Runs Flask server for health checks """
-    from hypercorn.asyncio import serve
-    from hypercorn.config import Config
+# Run Flask in a separate thread
+def run_flask_app():
+    """Runs Flask server in a separate thread for health checks"""
+    web_app.run(host="0.0.0.0", port=8000, debug=False, use_reloader=False)
 
-    config = Config()
-    config.bind = ["0.0.0.0:8000"]
-    await serve(web_app, config)
+# Import threading
+import threading
 
 # Environment variables
 API_ID = 20061115
@@ -402,9 +401,16 @@ async def list_groups(_, message: Message):
 async def main():
     """ Runs Pyrogram bot and Flask server concurrently """
     preload_players()  # Load players into memory before starting
+    
+    # Start Flask in a separate thread
+    flask_thread = threading.Thread(target=run_flask_app, daemon=True)
+    flask_thread.start()
+    logging.info("Health check server started on port 8000")
+    
     await bot.start()
     logging.info("Bot started successfully!")
-    await asyncio.gather(run_flask(), idle())
+    logging.info(f"Monitoring {len(MONITORED_GROUPS)} groups: {MONITORED_GROUPS}")
+    await idle()
     await bot.stop()
 
 if __name__ == "__main__":
