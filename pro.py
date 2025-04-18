@@ -71,7 +71,7 @@ bot = Client(
     max_concurrent_transmissions=10
 )
 
-RARITIES_TO_FORWARD = ["Cosmic", "Limited Edition", "Exclusive", "Ultimate"]
+RARITIES_TO_FORWARD = ["Cosmic", "Limited Edition", "Exclusive", "Ultimate", "Mythic"]
 TARGET_GROUP_IDS = [
     -1002404629452,
     -1002510720624,
