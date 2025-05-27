@@ -469,7 +469,7 @@ async def import_json_to_mongodb(_, message: Message):
         logging.error(f"Error importing JSON: {e}")
         await message.reply(f"⚠ Error: {str(e)}")
 
-@bot.on_message(filters.command("addplayer") & filters.chat(TARGET_GROUP_IDS) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("addplayer") & filters.user(ADMIN_USER_IDS))
 async def add_player(_, message: Message):
     """Add a player to a specific database."""
     try:
@@ -533,7 +533,7 @@ async def add_player(_, message: Message):
         logging.error(f"Error adding player: {e}")
         await message.reply(f"⚠ Error: {str(e)}")
 
-@bot.on_message(filters.command("dbinfo") & filters.chat(TARGET_GROUP_IDS) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("dbinfo") & filters.user(ADMIN_USER_IDS))
 async def database_info(_, message: Message):
     """Show information about both databases."""
     try:
