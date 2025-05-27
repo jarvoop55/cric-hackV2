@@ -355,7 +355,7 @@ async def check_rarity_and_forward(_, message: Message):
                 await bot.send_message(FORWARD_CHANNEL_ID, f"From group {group_id}:\n\n{message.text}")
                 break
 
-@bot.on_message(filters.command("fileid") & filters.chat(TARGET_GROUP_IDS) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("fileid") & filters.user(ADMIN_USER_IDS))
 async def extract_file_id(_, message: Message):
     """Extracts and sends the unique file ID of a replied photo."""
     if not message.reply_to_message or not message.reply_to_message.photo:
@@ -364,61 +364,6 @@ async def extract_file_id(_, message: Message):
     
     file_unique_id = message.reply_to_message.photo.file_unique_id
     await message.reply(f"📂 **File Unique ID:** `{file_unique_id}`")
-
-@bot.on_message(filters.command(["addgroup", "delgroup"]) & filters.user(ADMIN_USER_IDS))
-async def manage_groups(_, message: Message):
-    """Add or remove a group from target groups."""
-    global TARGET_GROUP_IDS, collection_status
-    
-    command = message.command[0]
-    is_add = command == "addgroup"
-    action_word = "add" if is_add else "remove"
-    
-    if len(message.command) != 2:
-        await message.reply(f"⚠ Usage: `/{command} [group_id]`")
-        return
-    
-    try:
-        group_id = int(message.command[1])
-        
-        if is_add:
-            if group_id in TARGET_GROUP_IDS:
-                await message.reply(f"⚠ Group `{group_id}` is already in target groups!")
-                return
-                
-            TARGET_GROUP_IDS.append(group_id)
-            collection_status[group_id] = False  # Add to status tracking with default off
-            await message.reply(f"✅ Group `{group_id}` added to target groups!")
-            logging.info(f"Added group {group_id} to target groups")
-        else:
-            if group_id not in TARGET_GROUP_IDS:
-                await message.reply(f"⚠ Group `{group_id}` is not in target groups!")
-                return
-                
-            TARGET_GROUP_IDS.remove(group_id)
-            if group_id in collection_status:
-                del collection_status[group_id]  # Remove from status tracking
-            await message.reply(f"✅ Group `{group_id}` removed from target groups!")
-            logging.info(f"Removed group {group_id} from target groups")
-    
-    except ValueError:
-        await message.reply(f"⚠ Invalid group ID format! Please provide a valid integer.")
-    except Exception as e:
-        logging.error(f"Error in {action_word}_group: {e}")
-        await message.reply(f"⚠ Error: {str(e)}")
-
-@bot.on_message(filters.command("groups") & filters.user(ADMIN_USER_IDS))
-async def list_groups(_, message: Message):
-    """List all target groups."""
-    groups_text = "📋 **Target Groups**:\n\n"
-    
-    for i, group_id in enumerate(TARGET_GROUP_IDS, 1):
-        groups_text += f"{i}. `{group_id}`\n"
-    
-    groups_text += f"\n**Main Group**: `{MAIN_GROUP_ID}`\n"
-    groups_text += f"**Forward Channel**: `{FORWARD_CHANNEL_ID}`"
-    
-    await message.reply(groups_text)
 
 @bot.on_message(filters.command("importjson") & filters.user(ADMIN_USER_IDS))
 async def import_json_to_mongodb(_, message: Message):
@@ -473,7 +418,7 @@ async def import_json_to_mongodb(_, message: Message):
         logging.error(f"Error importing JSON: {e}")
         await message.reply(f"⚠ Error: {str(e)}")
 
-@bot.on_message(filters.command("addplayer") & filters.chat(TARGET_GROUP_IDS) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("addplayer") & filters.user(ADMIN_USER_IDS))
 async def add_player(_, message: Message):
     """Add a player to a specific database."""
     try:
@@ -537,7 +482,7 @@ async def add_player(_, message: Message):
         logging.error(f"Error adding player: {e}")
         await message.reply(f"⚠ Error: {str(e)}")
 
-@bot.on_message(filters.command("dbinfo") & filters.chat(TARGET_GROUP_IDS) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("dbinfo") & filters.user(ADMIN_USER_IDS))
 async def database_info(_, message: Message):
     """Show information about both databases."""
     try:
