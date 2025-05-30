@@ -97,7 +97,7 @@ collection_status[MAIN_GROUP_ID] = False  # Also track main group
 # Admin User IDs
 ADMIN_USER_IDS = [1745451559, 1710597756, 7522153272, 7946198415, 7742832624, 7859049019, 7828242164, 7957490622, 7323291282, 6523029979, 7921822971]
 # User IDs permitted to trigger the collect function
-COLLECTOR_USER_IDS = [7876166941, 7876567363, 7921822971]
+COLLECTOR_USER_IDS = [7876166941, 7876567363, 7921822971, 7509527964, 7795661257]
 
 def should_forward_message(text):
     """Check if a message contains rare celebrity criteria for forwarding"""
@@ -218,7 +218,7 @@ async def check_status(_, message: Message):
     await message.reply(status_text)
 
 # Modified to start collection in all groups
-@bot.on_message(filters.command("startcollect") & filters.chat(TARGET_GROUP_IDS) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("collecton") & filters.chat(TARGET_GROUP_IDS) & filters.user(ADMIN_USER_IDS))
 async def start_collect(_, message: Message):
     # Start collection in all target groups
     for group_id in TARGET_GROUP_IDS:
@@ -230,7 +230,7 @@ async def start_collect(_, message: Message):
     await asyncio.sleep(2)
     await reply_msg.delete()
 
-@bot.on_message(filters.command("stopcollect") & filters.chat(TARGET_GROUP_IDS) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.command("collectoff") & filters.chat(TARGET_GROUP_IDS) & filters.user(ADMIN_USER_IDS))
 async def stop_collect(_, message: Message):
     # Stop collection in all target groups 
     for group_id in TARGET_GROUP_IDS:
