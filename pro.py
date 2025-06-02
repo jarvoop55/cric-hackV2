@@ -86,6 +86,9 @@ TARGET_GROUP_IDS = [
     -1002515574434,
     -1002258939999,
     -1002534259807,
+    -1002564859087,
+    -1002560135170,
+    -1002389233447
 ] # Target groups
 MAIN_GROUP_ID = -1002499388382 # Main group for /startmain command
 FORWARD_CHANNEL_ID = -1002260368357 # Forwarding channel
