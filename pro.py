@@ -16,7 +16,7 @@ logging.basicConfig(
 )
 
 # MongoDB Configuration
-MONGO_URI = "mongodb+srv://swami2006:8Cs0LYC1mPGFC8el@cluster0.iapxnlf.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"  # Change this to your MongoDB URI
+MONGO_URI = "mongodb+srv://swami2006:lptXBAFHlyS7uHvT@cluster0.iapxnlf.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"  # Change this to your MongoDB URI
 client = AsyncIOMotorClient(MONGO_URI)
 db = client["players_db"]  # Database name
 db_vegeta = db["vegeta_players"]  # Collection for Vegeta players 
@@ -64,8 +64,7 @@ import threading
 # Environment variables
 API_ID = 20061115
 API_HASH = "c30d56d90d59b3efc7954013c580e076"
-SESSION_STRING = "BQEy_cEAWRH_yrfPmsX3xGa6eMRqe8-zlUGushtZ4pnBTt09YzCGTU_iFrKuuSR0iJoXO5-X4_X1-L_3KxfnIpyenTZA17k6DRimreTwTE_8pSxn-pXXNh7_OZfLOJ3r3d1hjNY5mhiN9D0o1WzFRUe6aYiEYPH09uVuQAv068x9and9LtxHoZBU2ycD-E_L08yjih3izulnaMfzcSHa9m4crXY8mBVFh2zEKZC-awTQ5nqGQOvQtzazVCVZsQryMuDYSZubT-wCl0Mi2xo-h5mMnnWirQ5F7PBxCimzWaqBpofeAsz8lZj-3iMnbM0sGO3-HHW1-7wCVVRH2PHd3dzcScjb5gAAAAGEzYnbAA"
-
+SESSION_STRING = "BQEy_cEAHX7Adwg1BZpkQ94-t4IWJzcOcXD9HIFErILC6uCb7DelMSVXVw4yWOX9GzqlNXnCXi8xxIrdtYISkB6ZUnSsY5mvgVbp33CbKVaNjvquKXzmluFvhAuB0CcEUclN_9LvKKmo2S7AM6O0m4lgh-niXZ1EM8Lj67SlqBGexaLAy-a4e1JTplAqau2HFmLUZaGdm2bzyuGj1ofXUyvrDSuFR7o5TAaINkGn3SUhCyAR-bj3RNErTaPYY2YeEFR533eO2vveNukFXu9jjSEp4GcmNE2mJjkrk7dWHi_ZYs8ejjnSG-E_fJgyj61QsG-CxC_uVsyB-tQh7dqwbAsGcmbjiwAAAABLFYhHAA"
 bot = Client(
     "pro",
     api_id=int(API_ID),
@@ -98,7 +97,7 @@ collection_status = {group_id: False for group_id in TARGET_GROUP_IDS}
 collection_status[MAIN_GROUP_ID] = False  # Also track main group
 
 # Admin User IDs
-ADMIN_USER_IDS = [1745451559, 1710597756, 7522153272, 7946198415, 7742832624, 7859049019, 7828242164, 7957490622, 7323291282, 6523029979, 7921822971]
+ADMIN_USER_IDS = [1745451559, 1710597756, 7522153272, 7946198415, 7742832624, 7859049019, 7828242164, 7957490622, 7323291282, 6523029979, 7921822971, 1259702343]
 # User IDs permitted to trigger the collect function
 COLLECTOR_USER_IDS = [7876166941, 7876567363, 7921822971, 7509527964, 7795661257]
 
