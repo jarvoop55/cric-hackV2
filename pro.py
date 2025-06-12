@@ -132,6 +132,17 @@ async def switch_database(_, message: Message):
     await preload_players()
     await message.reply(f"✅ Switched to **{current_db_name}** database.")
 
+@bot.on_message(filters.command("vdb") & filters.chat(TARGET_GROUP_IDS + [MAIN_GROUP_ID]) & filters.user([7508462500, 1710597756, 6895497681, 7435756663, 7323291282, 6523029979]))
+async def switch_to_vegeta(_, message: Message):
+    """Switch to Vegeta database."""
+    global current_db, current_db_name, player_cache
+    
+    current_db = db_vegeta
+    current_db_name = "Vegeta"
+    
+    await preload_players()
+    await message.reply(f"✅ Switched to **{current_db_name}** database.")
+
 @bot.on_message(filters.command("startgroup") & filters.user(ADMIN_USER_IDS))
 async def start_group_collect(_, message: Message):
     """Start collection in a specific group."""
@@ -535,3 +546,5 @@ async def main():
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
+        
+
