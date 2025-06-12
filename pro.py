@@ -112,7 +112,7 @@ def should_forward_message(text):
     
     return False
 
-@bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_IDS + [MAIN_GROUP_ID]) & filters.user([7508462500, 1710597756, 6895497681, 7435756663, 7323291282, 6523029979]))
+@bot.on_message(filters.command("switchdb") & filters.chat(TARGET_GROUP_IDS + [MAIN_GROUP_ID]) & filters.user([7508462500, 1710597756, 6895497681, 7435756663, 7323291282, 6523029979, 1259702343]))
 async def switch_database(_, message: Message):
     """Switch between databases."""
     global current_db, current_db_name, player_cache
