@@ -49,6 +49,10 @@ async def preload_players():
 # Flask health check
 web_app = Flask(__name__)
 
+@web_app.route('/')
+def home():
+    return "Bot is running!", 200
+
 @web_app.route('/health')
 def health_check():
     return "OK", 200
