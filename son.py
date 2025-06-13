@@ -334,7 +334,7 @@ async def hacke(c: Client, m: Message):
     except Exception as e:
         logging.error(f"Error processing message in group {group_id}: {e}")
 
-@bot.on_message(filters.text & filters.chat(MAIN_GROUP_ID) & filters.user(COLLECTOR_USER_IDS))
+@bot.on_message(filters.text & filters.chat(MAIN_GROUP_ID) & filters.user(COLLECTOR_USER_IDS) & filters.user(ADMIN_USER_IDS))
 async def main_group_collect(_, message: Message):
     """Handles main group collection with more realistic behavior using hacke logic."""
     try:
