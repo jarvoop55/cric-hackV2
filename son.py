@@ -105,8 +105,8 @@ ADMIN_USER_IDS = [1745451559, 1710597756, 7522153272, 7946198415, 7742832624, 78
 COLLECTOR_USER_IDS = [7876166941, 7876567363, 7921822971, 7509527964, 7795661257, 7669199634]
 
 # Add these trigger words at the top with other constants
-MAIN_GROUP_TRIGGERS = ["hii", "hi", "bc", "hello", "hey", "hiii", "hiiii", "hiiiii"]
-MAIN_GROUP_STOP_WORDS = ["off", "afk", "brb", "bye", "stop", "offline", "sleep"]
+MAIN_GROUP_TRIGGERS = ["/hii", "hi", "/2", "hui"]
+MAIN_GROUP_STOP_WORDS = ["/brb", "/off", "/bye", "/afk"]
 
 # Add at the top with other constants
 OG_CAPTIONS = [
