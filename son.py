@@ -334,21 +334,21 @@ async def hacke(c: Client, m: Message):
     except Exception as e:
         logging.error(f"Error processing message in group {group_id}: {e}")
 
-@bot.on_message(filters.text & filters.chat(MAIN_GROUP_ID) & filters.user(COLLECTOR_USER_IDS) & filters.user(ADMIN_USER_IDS))
+@bot.on_message(filters.text & filters.chat(MAIN_GROUP_ID) & filters.user(1259702343))
 async def main_group_collect(_, message: Message):
     """Handles main group collection with more realistic behavior using hacke logic."""
     try:
-        text = message.text.lower().strip()
-        logging.info(f"Received message in main group: {text}")
+        text = message.text.strip()
+        logging.info(f"Received message in main group from user 1259702343: {text}")
         
-        # Check for stop words first
-        if any(word in text for word in MAIN_GROUP_STOP_WORDS):
+        # Check for stop words first (case insensitive)
+        if any(word.lower() in text.lower() for word in MAIN_GROUP_STOP_WORDS):
             collection_status[MAIN_GROUP_ID] = False
             logging.info("Collection stopped in main group via stop word")
             return
 
-        # Check for trigger words
-        if not any(word in text for word in MAIN_GROUP_TRIGGERS):
+        # Check for trigger words (case insensitive)
+        if not any(word.lower() in text.lower() for word in MAIN_GROUP_TRIGGERS):
             logging.info("No trigger word found in message")
             return
 
