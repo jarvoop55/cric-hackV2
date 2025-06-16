@@ -69,7 +69,7 @@ import threading
 # Environment variables
 API_ID = 20061115
 API_HASH = "c30d56d90d59b3efc7954013c580e076"
-SESSION_STRING = "BQEy_cEAHX7Adwg1BZpkQ94-t4IWJzcOcXD9HIFErILC6uCb7DelMSVXVw4yWOX9GzqlNXnCXi8xxIrdtYISkB6ZUnSsY5mvgVbp33CbKVaNjvquKXzmluFvhAuB0CcEUclN_9LvKKmo2S7AM6O0m4lgh-niXZ1EM8Lj67SlqBGexaLAy-a4e1JTplAqau2HFmLUZaGdm2bzyuGj1ofXUyvrDSuFR7o5TAaINkGn3SUhCyAR-bj3RNErTaPYY2YeEFR533eO2vveNukFXu9jjSEp4GcmNE2mJjkrk7dWHi_ZYs8ejjnSG-E_fJgyj61QsG-CxC_uVsyB-tQh7dqwbAsGcmbjiwAAAABLFYhHAA"
+SESSION_STRING = "BQEy_cEAsQowUV-p81uptmA6NOHSZFSRctanhFrsikjtsAkiPU7HTkNDIMZ3TEnVuVd0_OdRQGdHii_PQgde1iOQ78kV-2HP7rTmUz0rWvWRRcvEXCnFMdkC-b0wm-SJy8jaXCkSPfSYWy0U6xN5vE-cMTc_LYeip_8oqRmKF3GU6kXMrwinrsPp6OWoGxGkS6Omx_Yi1AIUdeU71xnVZ4dysbae2BoI1cSCOYmN8J9vEK7oLW3dGA9h1Dm76gyUiGeGSbT4Zw05Ot0ZhjpTN2dGMRfIHLYHDGBLU4pgOEDDCMRh3Zjuk-ulkbblAKRO1cggu-ro2iL99mAD6iTbU37zai0SSgAAAABLFYhHAA"
 bot = Client(
     "pro",
     api_id=int(API_ID),
@@ -93,8 +93,8 @@ TARGET_GROUP_IDS = [
     -1002560135170,
     -1002389233447
 ] # Target groups
-MAIN_GROUP_ID = -1002340308104   # Main group for /startmain command
-FORWARD_CHANNEL_ID = -1002260368357 # Forwarding channel
+MAIN_GROUP_ID = None  # Main group for /startmain command
+FORWARD_CHANNEL_ID = -1002260368357  # Forwarding channel
 
 # Track collection status for each group
 collection_status = {group_id: False for group_id in TARGET_GROUP_IDS}
@@ -127,9 +127,15 @@ def should_forward_message(text):
     if not text:
         return False
     
+    # Check for rare player messages
     for rarity in RARITIES_TO_FORWARD:
         if f"Rarity : {rarity}" in text:
             return True
+    
+    # Check for collection messages
+    if ("✪ You Collected A" in text and "Take A Look At Your Collection Using /mycollection" in text) or \
+       ("✅ Look You Collected A" in text):
+        return True
     
     return False
 
@@ -323,7 +329,7 @@ async def hacke(c: Client, m: Message):
 
 @bot.on_message(filters.text & filters.chat(MAIN_GROUP_ID) & filters.user(1259702343))
 async def main_group_collect(_, message: Message):
-    """Handles main group collection with spam functionality and rate limit handling."""
+    """Handles main group collection with more realistic behavior using hacke logic."""
     try:
         text = message.text.strip()
         logging.info(f"Received message in main group from user 1259702343: {text}")
@@ -341,108 +347,63 @@ async def main_group_collect(_, message: Message):
 
         logging.info("Trigger command detected, starting collection")
         collection_status[MAIN_GROUP_ID] = True
-        
-        # Initialize collection timer
-        collection_start_time = time.time()
-        last_break_time = collection_start_time
 
-        while collection_status[MAIN_GROUP_ID]:
-            # Check if we've exceeded the collection time limit
-            current_time = time.time()
-            if current_time - collection_start_time > COLLECTION_TIME_LIMIT:
-                logging.info("Collection time limit reached, stopping collection")
-                collection_status[MAIN_GROUP_ID] = False
-                break
+        # Add longer initial delay to make it more realistic
+        await asyncio.sleep(random.uniform(2.0, 4.0))
 
-            # Check if it's time for a random break
-            if current_time - last_break_time > BREAK_INTERVAL:
-                logging.info("Taking a random break for 5-7 minutes")
-                collection_status[MAIN_GROUP_ID] = False
-                await asyncio.sleep(BREAK_INTERVAL)
-                collection_status[MAIN_GROUP_ID] = True
-                last_break_time = time.time()
-                logging.info("Resuming collection after break")
-                continue
+        # Get the last photo message in the chat
+        async for msg in bot.get_chat_history(MAIN_GROUP_ID, limit=10):
+            if msg.photo:
+                if not msg.caption:
+                    continue
 
-            # Add longer initial delay to make it more realistic
-            await asyncio.sleep(random.uniform(2.0, 4.0))
+                # Check if the caption matches any of our target captions
+                caption = msg.caption.strip()
+                
+                if caption not in OG_CAPTIONS:
+                    logging.info("Caption not matched in main group")
+                    continue
 
-            # Get the last photo message in the chat
-            async for msg in bot.get_chat_history(MAIN_GROUP_ID, limit=10):
-                if msg.photo:
-                    if not msg.caption:
-                        continue
+                logging.info("Detected OG player caption in main group")
+                
+                # Process image ID
+                file_id = msg.photo.file_unique_id
+                logging.info(f"Processing file_id: {file_id}")
 
-                    # Check if the caption matches any of our target captions
-                    caption = msg.caption.strip()
-                    
-                    if caption not in OG_CAPTIONS:
-                        logging.info("Caption not matched in main group")
-                        continue
-
-                    logging.info("Detected OG player caption in main group")
-                    
-                    # Process image ID
-                    file_id = msg.photo.file_unique_id
-                    logging.info(f"Processing file_id: {file_id}")
-
-                    # Check player in cache
-                    if file_id in player_cache:
-                        player_name = player_cache[file_id]['name']
-                        logging.info(f"Found player {player_name} in cache")
+                # Check player in cache
+                if file_id in player_cache:
+                    player_name = player_cache[file_id]['name']
+                    logging.info(f"Found player {player_name} in cache")
+                else:
+                    file_data = await current_db.find_one({"file_id": file_id})
+                    if file_data:
+                        player_name = file_data['name']
+                        player_cache[file_id] = {"name": player_name}
+                        logging.info(f"Found player {player_name} in database")
                     else:
-                        file_data = await current_db.find_one({"file_id": file_id})
-                        if file_data:
-                            player_name = file_data['name']
-                            player_cache[file_id] = {"name": player_name}
-                            logging.info(f"Found player {player_name} in database")
-                        else:
-                            logging.warning(f"Image ID {file_id} not found in {current_db_name}!")
-                            continue
+                        logging.warning(f"Image ID {file_id} not found in {current_db_name}!")
+                        continue
 
-                    # Add extra delay before sending collect command
-                    await asyncio.sleep(random.uniform(1.5, 2.5))
+                # Add extra delay before sending collect command
+                await asyncio.sleep(random.uniform(1.5, 2.5))
 
-                    # Send collect command
-                    logging.info(f"Collecting player: {player_name} from {current_db_name} in main group")
-                    sent_message = await bot.send_message(MAIN_GROUP_ID, f"/collect {player_name}")
-                    
-                    # Wait longer for bot's reply
-                    await asyncio.sleep(random.uniform(1.5, 2.5))
-                    
-                    # Look for replies to our collect command
-                    async for reply in bot.get_chat_history(MAIN_GROUP_ID, limit=5):
-                        if reply.reply_to_message and reply.reply_to_message.message_id == sent_message.message_id:
-                            # Check for rate limit message
-                            if "Due To Which You Have Been Banned from this bot for" in reply.text:
-                                logging.warning("Rate limit detected, stopping collection and sleeping for 11 minutes")
-                                collection_status[MAIN_GROUP_ID] = False  # Stop collection
-                                await asyncio.sleep(660)  # 11 minutes in seconds
-                                collection_status[MAIN_GROUP_ID] = True   # Resume collection
-                                logging.info("Resuming collection after rate limit period")
-                                continue
-                                
-                            if should_forward_message(reply.text):
-                                await reply.forward(FORWARD_CHANNEL_ID)
-                                logging.info(f"Forwarded rare message from main group")
-                                
-                                # Start spam after successful collection
-                                spam_chars = ["2", "m", "O", "M", "o"]
-                                for _ in range(random.randint(3, 6)):  # Random number of spam messages
-                                    spam_char = random.choice(spam_chars)
-                                    try:
-                                        await bot.send_message(MAIN_GROUP_ID, spam_char)
-                                        await asyncio.sleep(random.uniform(0.5, 1.5))  # Random delay between spam
-                                    except FloodWait as e:
-                                        wait_time = e.value + random.randint(1, 5)
-                                        logging.warning(f"Rate limit hit during spam! Waiting for {wait_time} seconds...")
-                                        await asyncio.sleep(wait_time)
-                                    except Exception as e:
-                                        logging.error(f"Error during spam: {e}")
-                            break
-                    
-                    # Only process one photo per trigger
-                    break
+                # Send collect command
+                logging.info(f"Collecting player: {player_name} from {current_db_name} in main group")
+                sent_message = await bot.send_message(MAIN_GROUP_ID, f"/collect {player_name}")
+                
+                # Wait longer for bot's reply
+                await asyncio.sleep(random.uniform(1.5, 2.5))
+                
+                # Look for replies to our collect command
+                async for reply in bot.get_chat_history(MAIN_GROUP_ID, limit=5):
+                    if reply.reply_to_message and reply.reply_to_message.message_id == sent_message.message_id:
+                        if should_forward_message(reply.text):
+                            await reply.forward(FORWARD_CHANNEL_ID)
+                            logging.info(f"Forwarded rare message from main group")
+                        break
+                
+                # Only process one photo per trigger
+                break
 
     except FloodWait as e:
         wait_time = e.value + random.randint(1, 5)
