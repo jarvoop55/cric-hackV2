@@ -363,7 +363,7 @@ async def main_group_collect(c: Client, m: Message):
                 logging.info("No trigger command found in message (case-insensitive check)")
                 return
             # Add human-like delay
-            await asyncio.sleep(random.uniform(2.0, 4.0))
+            await asyncio.sleep(random.uniform(1.5, 2.0))
         elif m.from_user and m.from_user.id == 7795661257 and m.photo:
             # Only process if collection is on (checked below)
             # Add human-like delay
