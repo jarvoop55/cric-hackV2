@@ -110,7 +110,7 @@ COLLECTOR_USER_IDS = [7876166941, 7876567363, 7921822971, 7509527964, 7795661257
 
 # Add these trigger words at the top with other constants
 MAIN_GROUP_TRIGGERS = ["/hmm", "/hii", "/coolect", "/2", "2", "M", "m" "."]
-MAIN_GROUP_STOP_WORDS = ["/afk", "/brb", "/gn", "afk", "brb", "gm", "l", "L"]
+MAIN_GROUP_STOP_WORDS = ["/afk", "/brb", "/gn", "afk", "brb", "gm", "l", "L", "gn"]
 
 # Add at the top with other constants
 OG_CAPTIONS = [
