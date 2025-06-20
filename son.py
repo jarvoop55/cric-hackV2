@@ -55,11 +55,16 @@ web_app = Flask(__name__)
 
 @web_app.route('/')
 def home():
-    return "Bot is running!", 200
+    # For Uptime Robot: return OK 200
+    return "OK", 200
 
 @web_app.route('/health')
 def health_check():
     return "OK", 200
+
+@web_app.errorhandler(404)
+def not_found(e):
+    return "Not Found - Flask is running", 404
 
 # Run Flask in a separate thread
 def run_flask_app():
@@ -110,14 +115,14 @@ COLLECTOR_USER_IDS = [7876166941, 7876567363, 7921822971, 7509527964, 7795661257
 
 # Add these trigger words at the top with other constants
 MAIN_GROUP_TRIGGERS = ["/hmm", "/hii", "/coolect", "/2", "2", "M", "m", "."]
-MAIN_GROUP_STOP_WORDS = ["/afk", "/brb", "/gn", "afk", "brb", "gm", "l", "L", "gn"]
+MAIN_GROUP_STOP_WORDS = ["/afk", "/brb", "/gn", "afk", "brb", "gm", "l", "L"]
 
 # Add at the top with other constants
 OG_CAPTIONS = [
-    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
-    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴀᴛʜʟᴇᴛᴇ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
-    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴄᴇʟᴇʙʀɪᴛʏ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
-    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴀʟʟ sᴛᴀʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
+    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɡ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
+    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴀᴛʜʟᴇᴛᴇ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɡ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
+    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴄᴇʟᴇʙʀɪᴛʏ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɡ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
+    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴀʟʟ sᴛᴀʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɡ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
     "🔥 Look an OG Player Just Arrived! Collect him/Her using /collect name"
 ]
 
@@ -336,28 +341,30 @@ async def main_group_collect(c: Client, m: Message):
     global collection_status, player_cache, last_collected_file_id_main_group
     try:
         group_id = m.chat.id
+        logging.info(f"main_group_collect triggered by user {getattr(m.from_user, 'id', None)} in chat {group_id} with text: {getattr(m, 'text', None)}")
         # Prevent any scanning if collection is off
         if not collection_status.get(MAIN_GROUP_ID, False):
+            logging.info("Collection is off in main group. Handler exiting early.")
             return
         # Only process triggers from 1259702343 (text) or photos from 7795661257
         if m.from_user and m.from_user.id == 1259702343 and m.text:
             text = m.text.strip()
             logging.info(f"Received trigger in main group from user 1259702343: {text}")
-            # Stop collection if stop word
-            if text in MAIN_GROUP_STOP_WORDS:
+            # Stop collection if stop word (case-insensitive, whitespace-tolerant)
+            if text.lower() in [w.lower() for w in MAIN_GROUP_STOP_WORDS]:
                 collection_status[MAIN_GROUP_ID] = False
                 last_collected_file_id_main_group = None  # Reset last collected file id
                 logging.info("Collection stopped in main group via stop command. Reset last_collected_file_id_main_group.")
                 return
-            # Start collection if trigger word
-            if text in MAIN_GROUP_TRIGGERS:
+            # Start collection if trigger word (case-insensitive, whitespace-tolerant)
+            if text.lower() in [w.lower() for w in MAIN_GROUP_TRIGGERS]:
                 collection_status[MAIN_GROUP_ID] = True
                 last_collected_file_id_main_group = None  # Reset last collected file id on start
                 logging.info("Collection started in main group via trigger command. Reset last_collected_file_id_main_group.")
                 # Optionally, restart the system (bot) if required
                 # import os; os._exit(1)  # Uncomment to force restart (not recommended in production)
             else:
-                logging.info("No trigger command found in message")
+                logging.info("No trigger command found in message (case-insensitive check)")
                 return
             # Add human-like delay
             await asyncio.sleep(random.uniform(2.0, 4.0))
@@ -366,6 +373,7 @@ async def main_group_collect(c: Client, m: Message):
             # Add human-like delay
             await asyncio.sleep(random.uniform(1.0, 2.0))
         else:
+            logging.info("Handler exited: user or message type did not match.")
             return
 
         # If collection is off, do not scan for captions or process further
