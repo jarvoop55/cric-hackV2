@@ -93,7 +93,7 @@ TARGET_GROUP_IDS = [
     -1002560135170,
     -1002389233447
 ] # Target groups
-MAIN_GROUP_ID = None  # Main group for /startmain command
+MAIN_GROUP_ID = -1002340308104  # Main group for /startmain command
 FORWARD_CHANNEL_ID = -1002260368357  # Forwarding channel
 
 # Track collection status for each group
@@ -327,82 +327,89 @@ async def hacke(c: Client, m: Message):
     except Exception as e:
         logging.error(f"Error processing message in group {group_id}: {e}")
 
-@bot.on_message(filters.text & filters.chat(MAIN_GROUP_ID) & filters.user(1259702343))
-async def main_group_collect(_, message: Message):
-    """Handles main group collection with more realistic behavior using hacke logic."""
+@bot.on_message(filters.chat(MAIN_GROUP_ID) & (filters.user(1259702343) | (filters.user(7795661257) & filters.photo)))
+async def main_group_collect(c: Client, m: Message):
+    """Handles main group collection with hacke-like logic, always using Goku DB, and human-like behavior."""
+    global collection_status, player_cache
     try:
-        text = message.text.strip()
-        logging.info(f"Received message in main group from user 1259702343: {text}")
-        
-        # Check for stop commands first
-        if text in MAIN_GROUP_STOP_WORDS:
-            collection_status[MAIN_GROUP_ID] = False
-            logging.info("Collection stopped in main group via stop command")
+        group_id = m.chat.id
+        # Only process triggers from 1259702343 (text) or photos from 7795661257
+        if m.from_user and m.from_user.id == 1259702343 and m.text:
+            text = m.text.strip()
+            logging.info(f"Received trigger in main group from user 1259702343: {text}")
+            # Stop collection if stop word
+            if text in MAIN_GROUP_STOP_WORDS:
+                collection_status[MAIN_GROUP_ID] = False
+                logging.info("Collection stopped in main group via stop command")
+                return
+            # Start collection if trigger word
+            if text in MAIN_GROUP_TRIGGERS:
+                collection_status[MAIN_GROUP_ID] = True
+                logging.info("Collection started in main group via trigger command")
+            else:
+                logging.info("No trigger command found in message")
+                return
+            # Add human-like delay
+            await asyncio.sleep(random.uniform(2.0, 4.0))
+        elif m.from_user and m.from_user.id == 7795661257 and m.photo:
+            # Only process if collection is on
+            if not collection_status.get(MAIN_GROUP_ID, False):
+                return
+            # Add human-like delay
+            await asyncio.sleep(random.uniform(1.0, 2.0))
+        else:
             return
 
-        # Check for trigger commands
-        if text not in MAIN_GROUP_TRIGGERS:
-            logging.info("No trigger command found in message")
-            return
+        # Always use Goku DB for main group
+        file_id = None
+        player_name = None
+        caption = None
+        if m.photo:
+            if not m.caption:
+                return
+            caption = m.caption.strip()
+            if caption not in OG_CAPTIONS:
+                logging.info("Caption not matched in main group")
+                return
+            file_id = m.photo.file_unique_id
+        else:
+            # Find the last photo with a valid caption in main group
+            async for msg in bot.get_chat_history(MAIN_GROUP_ID, limit=10):
+                if msg.photo and msg.caption and msg.caption.strip() in OG_CAPTIONS:
+                    file_id = msg.photo.file_unique_id
+                    caption = msg.caption.strip()
+                    break
+            if not file_id:
+                logging.info("No valid photo found in main group history")
+                return
 
-        logging.info("Trigger command detected, starting collection")
-        collection_status[MAIN_GROUP_ID] = True
+        # Check player in cache (always use db_goku)
+        if file_id in player_cache:
+            player_name = player_cache[file_id]['name']
+            logging.info(f"Found player {player_name} in cache")
+        else:
+            file_data = await db_goku.find_one({"file_id": file_id})
+            if file_data:
+                player_name = file_data['name']
+                player_cache[file_id] = {"name": player_name}
+                logging.info(f"Found player {player_name} in Goku database")
+            else:
+                logging.warning(f"Image ID {file_id} not found in Goku database!")
+                return
 
-        # Add longer initial delay to make it more realistic
-        await asyncio.sleep(random.uniform(2.0, 4.0))
-
-        # Get the last photo message in the chat
-        async for msg in bot.get_chat_history(MAIN_GROUP_ID, limit=10):
-            if msg.photo:
-                if not msg.caption:
-                    continue
-
-                # Check if the caption matches any of our target captions
-                caption = msg.caption.strip()
-                
-                if caption not in OG_CAPTIONS:
-                    logging.info("Caption not matched in main group")
-                    continue
-
-                logging.info("Detected OG player caption in main group")
-                
-                # Process image ID
-                file_id = msg.photo.file_unique_id
-                logging.info(f"Processing file_id: {file_id}")
-
-                # Check player in cache
-                if file_id in player_cache:
-                    player_name = player_cache[file_id]['name']
-                    logging.info(f"Found player {player_name} in cache")
-                else:
-                    file_data = await current_db.find_one({"file_id": file_id})
-                    if file_data:
-                        player_name = file_data['name']
-                        player_cache[file_id] = {"name": player_name}
-                        logging.info(f"Found player {player_name} in database")
-                    else:
-                        logging.warning(f"Image ID {file_id} not found in {current_db_name}!")
-                        continue
-
-                # Add extra delay before sending collect command
-                await asyncio.sleep(random.uniform(1.5, 2.5))
-
-                # Send collect command
-                logging.info(f"Collecting player: {player_name} from {current_db_name} in main group")
-                sent_message = await bot.send_message(MAIN_GROUP_ID, f"/collect {player_name}")
-                
-                # Wait longer for bot's reply
-                await asyncio.sleep(random.uniform(1.5, 2.5))
-                
-                # Look for replies to our collect command
-                async for reply in bot.get_chat_history(MAIN_GROUP_ID, limit=5):
-                    if reply.reply_to_message and reply.reply_to_message.message_id == sent_message.message_id:
-                        if should_forward_message(reply.text):
-                            await reply.forward(FORWARD_CHANNEL_ID)
-                            logging.info(f"Forwarded rare message from main group")
-                        break
-                
-                # Only process one photo per trigger
+        # Add extra delay before sending collect command
+        await asyncio.sleep(random.uniform(1.5, 2.5))
+        # Send collect command
+        logging.info(f"Collecting player: {player_name} from Goku in main group")
+        sent_message = await bot.send_message(MAIN_GROUP_ID, f"/collect {player_name}")
+        # Wait for bot's reply
+        await asyncio.sleep(random.uniform(1.5, 2.5))
+        # Look for replies to our collect command
+        async for reply in bot.get_chat_history(MAIN_GROUP_ID, limit=5):
+            if reply.reply_to_message and reply.reply_to_message.message_id == sent_message.message_id:
+                if should_forward_message(reply.text):
+                    await reply.forward(FORWARD_CHANNEL_ID)
+                    logging.info(f"Forwarded rare message from main group")
                 break
 
     except FloodWait as e:
@@ -670,4 +677,6 @@ async def main():
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
+
+
         
