@@ -30,6 +30,9 @@ current_db_name = "Goku"  # Track the name for response messages
 # In-memory cache for quick lookups
 player_cache = {}
 
+# Track last collected file_id in main group
+last_collected_file_id_main_group = None  # Track last collected file_id in main group
+
 async def preload_players():
     """Load players into cache from the active database."""
     global player_cache
@@ -93,7 +96,7 @@ TARGET_GROUP_IDS = [
     -1002560135170,
     -1002389233447
 ] # Target groups
-MAIN_GROUP_ID = -1002340308104  # Main group for /startmain command
+MAIN_GROUP_ID = -1002340308104    # Main group for /startmain command
 FORWARD_CHANNEL_ID = -1002260368357  # Forwarding channel
 
 # Track collection status for each group
@@ -330,9 +333,12 @@ async def hacke(c: Client, m: Message):
 @bot.on_message(filters.chat(MAIN_GROUP_ID) & (filters.user(1259702343) | (filters.user(7795661257) & filters.photo)))
 async def main_group_collect(c: Client, m: Message):
     """Handles main group collection with hacke-like logic, always using Goku DB, and human-like behavior."""
-    global collection_status, player_cache
+    global collection_status, player_cache, last_collected_file_id_main_group
     try:
         group_id = m.chat.id
+        # Prevent any scanning if collection is off
+        if not collection_status.get(MAIN_GROUP_ID, False):
+            return
         # Only process triggers from 1259702343 (text) or photos from 7795661257
         if m.from_user and m.from_user.id == 1259702343 and m.text:
             text = m.text.strip()
@@ -340,24 +346,31 @@ async def main_group_collect(c: Client, m: Message):
             # Stop collection if stop word
             if text in MAIN_GROUP_STOP_WORDS:
                 collection_status[MAIN_GROUP_ID] = False
-                logging.info("Collection stopped in main group via stop command")
+                last_collected_file_id_main_group = None  # Reset last collected file id
+                logging.info("Collection stopped in main group via stop command. Reset last_collected_file_id_main_group.")
                 return
             # Start collection if trigger word
             if text in MAIN_GROUP_TRIGGERS:
                 collection_status[MAIN_GROUP_ID] = True
-                logging.info("Collection started in main group via trigger command")
+                last_collected_file_id_main_group = None  # Reset last collected file id on start
+                logging.info("Collection started in main group via trigger command. Reset last_collected_file_id_main_group.")
+                # Optionally, restart the system (bot) if required
+                # import os; os._exit(1)  # Uncomment to force restart (not recommended in production)
             else:
                 logging.info("No trigger command found in message")
                 return
             # Add human-like delay
             await asyncio.sleep(random.uniform(2.0, 4.0))
         elif m.from_user and m.from_user.id == 7795661257 and m.photo:
-            # Only process if collection is on
-            if not collection_status.get(MAIN_GROUP_ID, False):
-                return
+            # Only process if collection is on (already checked above)
             # Add human-like delay
             await asyncio.sleep(random.uniform(1.0, 2.0))
         else:
+            return
+
+        # If collection is off, do not scan for captions or process further
+        if not collection_status.get(MAIN_GROUP_ID, False):
+            logging.info("Collection is off in main group. Skipping message scan.")
             return
 
         # Always use Goku DB for main group
@@ -383,6 +396,11 @@ async def main_group_collect(c: Client, m: Message):
                 logging.info("No valid photo found in main group history")
                 return
 
+        # Prevent duplicate collection of the same player
+        if file_id == last_collected_file_id_main_group:
+            logging.info(f"Already collected player with file_id {file_id} in main group. Skipping.")
+            return
+
         # Check player in cache (always use db_goku)
         if file_id in player_cache:
             player_name = player_cache[file_id]['name']
@@ -398,12 +416,13 @@ async def main_group_collect(c: Client, m: Message):
                 return
 
         # Add extra delay before sending collect command
-        await asyncio.sleep(random.uniform(1.5, 2.5))
+        await asyncio.sleep(random.uniform(1, 2))
         # Send collect command
         logging.info(f"Collecting player: {player_name} from Goku in main group")
         sent_message = await bot.send_message(MAIN_GROUP_ID, f"/collect {player_name}")
+        last_collected_file_id_main_group = file_id  # Update last collected file_id
         # Wait for bot's reply
-        await asyncio.sleep(random.uniform(1.5, 2.5))
+        await asyncio.sleep(random.uniform(1, 2))
         # Look for replies to our collect command
         async for reply in bot.get_chat_history(MAIN_GROUP_ID, limit=5):
             if reply.reply_to_message and reply.reply_to_message.message_id == sent_message.message_id:
@@ -677,6 +696,8 @@ async def main():
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
+
+
 
 
         
