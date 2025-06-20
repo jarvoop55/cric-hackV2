@@ -342,11 +342,7 @@ async def main_group_collect(c: Client, m: Message):
     try:
         group_id = m.chat.id
         logging.info(f"main_group_collect triggered by user {getattr(m.from_user, 'id', None)} in chat {group_id} with text: {getattr(m, 'text', None)}")
-        # Prevent any scanning if collection is off
-        if not collection_status.get(MAIN_GROUP_ID, False):
-            logging.info("Collection is off in main group. Handler exiting early.")
-            return
-        # Only process triggers from 1259702343 (text) or photos from 7795661257
+        # Always allow trigger/stop word processing
         if m.from_user and m.from_user.id == 1259702343 and m.text:
             text = m.text.strip()
             logging.info(f"Received trigger in main group from user 1259702343: {text}")
@@ -369,14 +365,14 @@ async def main_group_collect(c: Client, m: Message):
             # Add human-like delay
             await asyncio.sleep(random.uniform(2.0, 4.0))
         elif m.from_user and m.from_user.id == 7795661257 and m.photo:
-            # Only process if collection is on (already checked above)
+            # Only process if collection is on (checked below)
             # Add human-like delay
             await asyncio.sleep(random.uniform(1.0, 2.0))
         else:
             logging.info("Handler exited: user or message type did not match.")
             return
 
-        # If collection is off, do not scan for captions or process further
+        # Prevent any scanning if collection is off (but allow trigger/stop word logic above)
         if not collection_status.get(MAIN_GROUP_ID, False):
             logging.info("Collection is off in main group. Skipping message scan.")
             return
@@ -704,6 +700,9 @@ async def main():
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
+
+
+
 
 
 
