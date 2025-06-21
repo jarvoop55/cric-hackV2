@@ -114,7 +114,7 @@ ADMIN_USER_IDS = [1745451559, 1710597756, 7522153272, 7946198415, 7742832624, 78
 COLLECTOR_USER_IDS = [7876166941, 7876567363, 7921822971, 7509527964, 7795661257, 7669199634]
 
 # Add these trigger words at the top with other constants
-MAIN_GROUP_TRIGGERS = ["/hmm", "/hii", "/coolect", "/2", "2", "M", "m", ".",]
+MAIN_GROUP_TRIGGERS = ["/hmm", "/hii", "/coolect", "/2", "2", "M", "m", ".", "/dart"]
 MAIN_GROUP_STOP_WORDS = ["/afk", "/brb", "/gn", "afk", "brb", "gm", "l", "L", "/slot", "/basket"]
 
 # Add at the top with other constants
@@ -393,7 +393,7 @@ async def main_group_collect(c: Client, m: Message):
                     logging.warning(f"Image ID {file_id} not found in Goku database!")
                     return
             # Add extra delay before sending collect command
-            await asyncio.sleep(random.uniform(1, 2))
+            await asyncio.sleep(random.uniform(0.4, 0.6))
             # Send collect command (as bot/1259702343)
             logging.info(f"Collecting player: {player_name} from Goku in main group")
             sent_message = await bot.send_message(MAIN_GROUP_ID, f"/collect {player_name}")
