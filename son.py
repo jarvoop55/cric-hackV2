@@ -114,21 +114,18 @@ ADMIN_USER_IDS = [1745451559, 1710597756, 7522153272, 7946198415, 7742832624, 78
 COLLECTOR_USER_IDS = [7876166941, 7876567363, 7921822971, 7509527964, 7795661257, 7669199634]
 
 # Add these trigger words at the top with other constants
-MAIN_GROUP_TRIGGERS = ["/hmm", "/hii", "/coolect", "/2", "2", "M", "m", "."]
-MAIN_GROUP_STOP_WORDS = ["/afk", "/brb", "/gn", "afk", "brb", "gm", "l", "L"]
+MAIN_GROUP_TRIGGERS = ["/hmm", "/hii", "/coolect", "/2", "2", "M", "m", ".",]
+MAIN_GROUP_STOP_WORDS = ["/afk", "/brb", "/gn", "afk", "brb", "gm", "l", "L", "/slot", "/basket"]
 
 # Add at the top with other constants
 OG_CAPTIONS = [
-    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɡ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
-    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴀᴛʜʟᴇᴛᴇ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɡ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
-    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴄᴇʟᴇʙʀɪᴛʏ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɡ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
-    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴀʟʟ sᴛᴀʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɡ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
+    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴘʟᴀʏᴇʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
+    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴀᴛʜʟᴇᴛᴇ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
+    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴄᴇʟᴇʙʀɪᴛʏ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
+    "🔥 ʟᴏᴏᴋ ᴀɴ ᴏɢ ᴀʟʟ sᴛᴀʀ ᴊᴜꜱᴛ ᴀʀʀɪᴠᴇᴅ ᴄᴏʟʟᴇᴄᴛ ʜɪᴍ/Her ᴜꜱɪɴɢ /ᴄᴏʟʟᴇᴄᴛ ɴᴀᴍᴇ",
     "🔥 Look an OG Player Just Arrived! Collect him/Her using /collect name"
 ]
 
-# Add these constants at the top with other constants
-COLLECTION_TIME_LIMIT = random.uniform(3600, 5400)  # 1-1.5 hours in seconds
-BREAK_INTERVAL = random.uniform(300, 420)  # 5-7 minutes in seconds
 
 def should_forward_message(text):
     """Check if a message contains rare celebrity criteria for forwarding"""
@@ -272,14 +269,15 @@ async def stop_collect(_, message: Message):
     await asyncio.sleep(2)
     await reply_msg.delete()
 
-@bot.on_message(filters.photo & (filters.chat(TARGET_GROUP_IDS) | filters.chat(MAIN_GROUP_ID)) & filters.user(COLLECTOR_USER_IDS))
+@bot.on_message(filters.photo & filters.chat(TARGET_GROUP_IDS))
 async def hacke(c: Client, m: Message):
     """Handles image messages and checks for OG player captions."""
     group_id = m.chat.id
-    
+    # Only process if sender is in COLLECTOR_USER_IDS
+    if not m.from_user or m.from_user.id not in COLLECTOR_USER_IDS:
+        return
     if not collection_status.get(group_id, False):
         return
-
     try:
         if not m.caption:
             return
@@ -363,7 +361,7 @@ async def main_group_collect(c: Client, m: Message):
                 logging.info("No trigger command found in message (case-insensitive check)")
                 return
             # Add human-like delay
-            await asyncio.sleep(random.uniform(1.0, 1.5))
+            await asyncio.sleep(random.uniform(1.0, 2.0))
         elif m.from_user and m.from_user.id == 7795661257 and m.photo:
             # Only process if collection is on (checked below)
             # Add human-like delay
